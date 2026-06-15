@@ -1,0 +1,3437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestão de Obras</title>
+<style>
+:root {
+  --bg0: #f4f6fb;
+  --bg1: #ffffff;
+  --bg2: #f0f4ff;
+  --bg3: #e4eaf7;
+  --txt: #0f172a;
+  --txt2: #64748b;
+  --border: #dde3f0;
+  --accent: #2563eb;
+  --accent2: #1d4ed8;
+  --green: #16a34a;
+  --yellow: #d97706;
+  --red: #dc2626;
+  --purple: #7c3aed;
+  --radius: 10px;
+  --shadow-sm: 0 1px 3px rgba(15,23,42,.07), 0 1px 2px rgba(15,23,42,.05);
+  --shadow: 0 4px 12px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.05);
+  --shadow-lg: 0 12px 32px rgba(15,23,42,.12), 0 4px 8px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg0);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+button{cursor:pointer;font-family:inherit}
+input,textarea,select{font-family:inherit}
+
+/* === TOPBAR === */
+#topbar{display:flex;align-items:center;gap:14px;padding:0 28px;height:56px;background:var(--bg1);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-wrap:wrap;box-shadow:var(--shadow-sm)}
+#topbar h1{font-size:1.05rem;font-weight:800;color:var(--txt);display:flex;align-items:center;gap:8px;letter-spacing:-.3px}
+#topbar h1 span{color:var(--accent)}
+.tabs{display:flex;gap:2px;background:var(--bg0);border-radius:8px;padding:3px}
+.tab-btn{padding:6px 16px;border:none;background:transparent;color:var(--txt2);border-radius:6px;font-size:.84rem;font-weight:600;transition:.15s;letter-spacing:-.1px}
+.tab-btn:hover{background:var(--bg3);color:var(--txt)}
+.tab-btn.active{background:var(--bg1);color:var(--accent);box-shadow:var(--shadow-sm)}
+.spacer{flex:1}
+.icon-btn{padding:6px 13px;border:1px solid var(--border);background:var(--bg1);color:var(--txt2);border-radius:8px;font-size:.81rem;font-weight:500;transition:.15s;display:flex;align-items:center;gap:6px}
+.icon-btn:hover{background:var(--bg2);color:var(--accent);border-color:var(--accent)}
+.icon-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* === VIEWS === */
+.view{display:none;padding:28px 32px}
+.view.active{display:block}
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+
+/* === BUTTONS === */
+.btn-primary{padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.84rem;font-weight:600;transition:.15s;letter-spacing:-.1px}
+.btn-primary:hover{background:var(--accent2);box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.btn-danger{padding:6px 12px;background:transparent;color:var(--red);border:1px solid rgba(220,38,38,.3);border-radius:8px;font-size:.82rem;font-weight:600;transition:.15s}
+.btn-danger:hover{background:rgba(220,38,38,.08);border-color:var(--red)}
+.btn-sm{padding:5px 11px;font-size:.79rem;border-radius:7px}
+.btn-ghost{padding:6px 12px;background:transparent;color:var(--txt2);border:1px solid var(--border);border-radius:8px;font-size:.82rem;font-weight:500;transition:.15s}
+.btn-ghost:hover{background:var(--bg2);color:var(--accent);border-color:var(--accent)}
+
+/* === KANBAN === */
+#kanban-board,#planning-board{display:flex;gap:18px;overflow-x:auto;padding-bottom:16px;min-height:70vh;align-items:flex-start}
+.kanban-col{background:var(--bg0);border-radius:14px;min-width:288px;max-width:288px;display:flex;flex-direction:column;border:1px solid var(--border);flex-shrink:0}
+.kanban-col.drag-over{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.2),var(--shadow)}
+.col-header{display:flex;align-items:center;gap:8px;padding:13px 14px;border-bottom:1px solid var(--border);background:var(--bg1);border-radius:14px 14px 0 0}
+.col-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.col-title{flex:1;font-weight:700;font-size:.88rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.col-title:hover{color:var(--accent)}
+.col-count{background:var(--bg3);color:var(--txt2);border-radius:99px;padding:2px 9px;font-size:.72rem;font-weight:700}
+.col-menu-btn{background:transparent;border:none;color:var(--txt2);font-size:1.1rem;padding:2px 6px;border-radius:6px;line-height:1}
+.col-menu-btn:hover{background:var(--bg3);color:var(--txt)}
+.col-cards{padding:10px;display:flex;flex-direction:column;gap:8px;flex:1;min-height:60px}
+.col-add{padding:8px 10px;border-top:1px solid var(--border)}
+.col-add button{width:100%;padding:8px;background:transparent;border:1.5px dashed var(--border);color:var(--txt2);border-radius:8px;font-size:.8rem;font-weight:500;transition:.15s}
+.col-add button:hover{border-color:var(--accent);color:var(--accent);background:rgba(37,99,235,.04)}
+.painel-obra-row{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;border-top:1px solid var(--border);transition:.15s}
+.painel-obra-row:hover{background:var(--bg2)}
+.painel-obra-name{font-weight:600;font-size:.88rem;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.kanban-card{background:var(--bg1);border-radius:10px;padding:14px;cursor:pointer;border:1px solid var(--border);transition:.18s;position:relative;user-select:none;box-shadow:var(--shadow-sm)}
+.kanban-card:hover{border-color:var(--accent);box-shadow:0 6px 20px rgba(37,99,235,.12);transform:translateY(-2px)}
+.kanban-card.dragging{opacity:.45;transform:rotate(1.5deg) scale(.98)}
+.card-title{font-weight:700;font-size:.88rem;margin-bottom:7px;color:var(--txt);letter-spacing:-.2px}
+.card-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.card-tag{font-size:.69rem;padding:3px 8px;border-radius:99px;font-weight:600;letter-spacing:.1px}
+.card-progress{margin-top:10px}
+.progress-bar{height:5px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);border-radius:99px;transition:.3s}
+.progress-txt{font-size:.69rem;color:var(--txt2);margin-top:3px}
+
+/* === MODAL === */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);z-index:200;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg1);border-radius:16px;width:100%;max-width:820px;border:1px solid var(--border);box-shadow:var(--shadow-lg);position:relative;display:flex;flex-direction:column;max-height:90vh}
+.modal-header{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-header h2{flex:1;font-size:1rem;font-weight:700;letter-spacing:-.2px}
+.modal-close{background:var(--bg0);border:1px solid var(--border);color:var(--txt2);font-size:1rem;line-height:1;padding:5px 9px;border-radius:7px;transition:.15s}
+.modal-close:hover{background:var(--bg3);color:var(--txt)}
+.modal-tabs{display:flex;gap:2px;padding:12px 22px 0;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg0)}
+.modal-tab{padding:8px 16px;border:none;background:transparent;color:var(--txt2);border-radius:8px 8px 0 0;font-size:.83rem;font-weight:600;border-bottom:2px solid transparent;transition:.15s;letter-spacing:-.1px}
+.modal-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg1)}
+.modal-tab:hover:not(.active){color:var(--txt);background:var(--bg3)}
+.modal-body{padding:22px;overflow-y:auto;flex:1}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:var(--bg0);border-radius:0 0 16px 16px}
+
+/* form */
+.form-group{margin-bottom:15px}
+.form-group label{display:block;font-size:.78rem;color:var(--txt2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+input[type=text],input[type=email],input[type=tel],input[type=number],input[type=date],textarea,select{
+  width:100%;padding:9px 12px;background:var(--bg0);border:1.5px solid var(--border);color:var(--txt);
+  border-radius:8px;font-size:.85rem;transition:.15s;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);background:var(--bg1);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+textarea{resize:vertical;min-height:72px}
+select option{background:var(--bg1);color:var(--txt)}
+
+/* etapas / subfases */
+.checklist-section{margin-top:4px}
+.etapa-label{font-weight:800;font-size:.75rem;color:var(--accent);min-width:56px;text-transform:uppercase;letter-spacing:.5px;background:rgba(37,99,235,.08);padding:2px 8px;border-radius:4px}
+.subfase-num{font-size:.73rem;font-weight:700;color:var(--txt2);min-width:28px}
+.subfase-row-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.calc-dates{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.date-chip{font-size:.71rem;padding:3px 10px;background:var(--bg3);border-radius:99px;color:var(--txt2);font-weight:500}
+.date-chip.end-date{color:var(--green);background:rgba(22,163,74,.1)}
+.date-chip.dep-date{color:var(--yellow);background:rgba(217,119,6,.1)}
+.date-chip.warn{color:var(--red);background:rgba(220,38,38,.1)}
+
+/* comentários */
+.comment-form{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.comment-list{display:flex;flex-direction:column;gap:10px}
+.comment-item{background:var(--bg0);border-radius:10px;padding:13px 16px;border:1px solid var(--border);border-left:3px solid var(--accent);position:relative}
+.comment-author{font-weight:700;font-size:.82rem;color:var(--txt)}
+.comment-date{font-size:.71rem;color:var(--txt2);margin-left:8px}
+.comment-text{font-size:.84rem;margin-top:6px;color:var(--txt);word-break:break-word;line-height:1.55}
+.comment-del{position:absolute;top:8px;right:8px;background:transparent;border:none;color:var(--txt2);font-size:.82rem;padding:3px 7px;border-radius:6px}
+.comment-del:hover{color:var(--red);background:rgba(220,38,38,.08)}
+
+/* arquivos */
+.file-upload-area{border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer;transition:.15s;margin-bottom:14px;background:var(--bg0)}
+.file-upload-area:hover{border-color:var(--accent);background:rgba(37,99,235,.03)}
+.file-list{display:flex;flex-direction:column;gap:8px}
+.file-item{display:flex;align-items:center;gap:10px;background:var(--bg0);border-radius:9px;padding:10px 14px;border:1px solid var(--border)}
+.file-icon{font-size:1.4rem;width:32px;text-align:center;flex-shrink:0}
+.file-info{flex:1;min-width:0}
+.file-name{font-size:.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-meta{font-size:.71rem;color:var(--txt2)}
+.file-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* === GANTT === */
+#gantt-container{background:var(--bg1);border-radius:12px;border:1px solid var(--border);overflow:clip;box-shadow:var(--shadow-sm)}
+.gantt-scroll{overflow-x:auto}
+.gantt-table{min-width:600px;width:max-content;border-collapse:collapse}
+.gantt-header-row th{background:var(--bg0);padding:7px 4px;font-size:.71rem;color:var(--txt2);border-bottom:1px solid var(--border);font-weight:700;white-space:nowrap;text-align:center;letter-spacing:.2px}
+.gantt-header-row th.g-label{text-align:left;min-width:210px;padding-left:14px;position:sticky;left:0;background:var(--bg0);z-index:10}
+.gantt-row{border-bottom:1px solid var(--border)}
+.gantt-row:hover{background:rgba(37,99,235,.03)}
+.gantt-row td{padding:3px 2px;vertical-align:middle}
+.gantt-row td.g-label{padding:5px 14px;font-size:.78rem;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;position:sticky;left:0;background:var(--bg1);z-index:5;color:var(--txt);border-right:1px solid var(--border)}
+.gantt-row td.g-label.grp{font-weight:700;color:var(--accent);font-size:.78rem;background:var(--bg0);text-transform:uppercase;letter-spacing:.3px}
+.g-cell{position:relative;height:28px;min-width:22px}
+.g-bar{position:absolute;top:4px;bottom:4px;border-radius:4px;cursor:pointer;transition:.1s}
+.g-bar:hover{filter:brightness(1.15);z-index:20;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.g-bar-lbl{font-size:.61rem;font-weight:700;color:#fff;padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:20px}
+.g-today{position:absolute;top:0;bottom:0;width:2px;background:var(--red);opacity:.7;z-index:15;pointer-events:none}
+.gantt-legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:var(--bg0)}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:.76rem;color:var(--txt2)}
+.legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
+/* === EQUIPES === */
+.teams-layout{display:flex;gap:18px;min-height:60vh;align-items:flex-start}
+.teams-list-col{width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.teams-list-col .list-toolbar{display:flex;gap:8px;margin-bottom:8px}
+.team-card{background:var(--bg1);border-radius:12px;padding:12px 14px;border:1px solid var(--border);cursor:pointer;transition:.18s;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-sm)}
+.team-card:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(37,99,235,.12);transform:translateY(-1px)}
+.team-card.selected{border-color:var(--accent);background:rgba(37,99,235,.04);box-shadow:0 0 0 2px rgba(37,99,235,.15)}
+.team-avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#fff;flex-shrink:0}
+.team-info{flex:1;min-width:0}
+.team-name{font-weight:700;font-size:.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.team-mc{font-size:.73rem;color:var(--txt2);margin-top:2px}
+.team-actions{display:flex;gap:4px;flex-shrink:0}
+
+.team-detail-col{flex:1;background:var(--bg1);border-radius:14px;border:1px solid var(--border);display:flex;flex-direction:column;min-height:400px;box-shadow:var(--shadow-sm)}
+.team-detail-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--txt2);gap:10px;padding:40px;text-align:center}
+.team-detail-empty .big-icon{font-size:2.8rem;opacity:.18}
+.team-detail-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;background:var(--bg0);border-radius:14px 14px 0 0}
+.team-detail-header .ta{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;color:#fff;flex-shrink:0}
+.team-detail-header h3{flex:1;font-size:.97rem;font-weight:700;letter-spacing:-.2px}
+.team-detail-body{padding:18px 22px;flex:1;overflow-y:auto}
+.members-grid{display:flex;flex-direction:column;gap:8px}
+.member-card{background:var(--bg0);border-radius:10px;padding:12px 14px;border:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.member-avatar{width:36px;height:36px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:var(--txt2);flex-shrink:0}
+.member-info{flex:1;min-width:0}
+.member-name{font-weight:700;font-size:.84rem;color:var(--txt)}
+.member-role{font-size:.73rem;color:var(--txt2)}
+.member-contact{font-size:.71rem;color:var(--txt2);margin-top:2px}
+.member-actions{display:flex;gap:4px;flex-shrink:0}
+
+/* cor picker */
+.color-picker-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.color-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.12s;flex-shrink:0}
+.color-swatch.selected,.color-swatch:hover{border-color:var(--txt);transform:scale(1.18);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+
+/* context menu */
+.ctx-menu{position:fixed;background:var(--bg1);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);z-index:500;min-width:180px;padding:4px}
+.ctx-menu button{display:block;width:100%;padding:8px 14px;background:transparent;border:none;color:var(--txt);font-size:.83rem;text-align:left;border-radius:7px;transition:.1s;font-weight:500}
+.ctx-menu button:hover{background:var(--bg2)}
+.ctx-menu button.danger{color:var(--red)}
+.ctx-menu hr{border:none;border-top:1px solid var(--border);margin:4px 0}
+
+/* tooltip gantt */
+.gantt-tooltip{position:fixed;background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:11px 15px;font-size:.78rem;z-index:600;pointer-events:none;box-shadow:var(--shadow-lg);max-width:240px;line-height:1.65}
+.gantt-tooltip h4{font-size:.83rem;font-weight:700;margin-bottom:5px;color:var(--txt)}
+.gantt-tooltip p{color:var(--txt2)}
+
+/* empty state */
+.empty-state{text-align:center;padding:40px 20px;color:var(--txt2)}
+.empty-state .icon{font-size:2.5rem;opacity:.2;margin-bottom:10px}
+.empty-state p{font-size:.85rem;font-weight:500}
+
+/* settings sub-tabs */
+.settings-stab{padding:8px 18px;border:none;background:transparent;color:var(--txt2);border-radius:8px 8px 0 0;font-size:.84rem;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s;cursor:pointer;letter-spacing:-.1px}
+.settings-stab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg1)}
+.settings-stab:hover:not(.active){color:var(--txt);background:var(--bg3)}
+
+/* drag handle */
+.drag-handle{cursor:grab;color:var(--txt2);font-size:1.1rem;padding:0 4px 0 0;flex-shrink:0;user-select:none;opacity:.4;transition:.15s}
+.drag-handle:hover{opacity:.8}
+.subfase-row.sf-drag-over-top{border-top:2px solid var(--accent)}
+.subfase-row.sf-drag-over-bot{border-bottom:2px solid var(--accent)}
+/* gantt drag ghost */
+#g-ghost{display:none;position:fixed;border-radius:4px;opacity:.75;pointer-events:none;z-index:400;height:20px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.g-bar{cursor:grab}
+/* gantt day-separator + sticky fix */
+.g-cell{border-right:1px solid rgba(0,0,0,.05)}
+.gantt-row:hover td.g-label{background:var(--bg1)}
+.gantt-row:hover td.g-label.grp{background:var(--bg0)}
+.gantt-header-row th{border-right:1px solid rgba(0,0,0,.05)}
+/* cal week */
+#gestao-calendario-sub table td,#gestao-calendario-sub table th{border:1px solid var(--border)}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:var(--txt2)}
+
+.btn-vtoggle{padding:6px 16px;border:none;background:transparent;color:var(--txt2);border-radius:7px;font-size:.82rem;font-weight:600;transition:.15s;cursor:pointer;letter-spacing:-.1px}
+.btn-vtoggle.active{background:var(--bg1);color:var(--accent);box-shadow:var(--shadow-sm)}
+.btn-vtoggle:hover:not(.active){background:var(--bg3);color:var(--txt)}
+
+@media(max-width:720px){
+  .form-row,.form-row-3{grid-template-columns:1fr}
+  .teams-layout{flex-direction:column}
+  .teams-list-col{width:100%}
+  .modal{max-height:96vh}
+  .view{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <h1>🏗️ <span>Gestão</span> de Obras</h1>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showView('planning')">📐 Planejamento</button>
+    <button class="tab-btn" onclick="showView('gestao')">🏗️ Gestão de Obras</button>
+  </div>
+  <div class="spacer"></div>
+  <button class="icon-btn" onclick="exportData()">⬆️ Exportar</button>
+  <label class="icon-btn" style="cursor:pointer">⬇️ Importar
+    <input type="file" accept=".json" style="display:none" onchange="importData(event)">
+  </label>
+  <button class="icon-btn" id="settings-btn" onclick="showView('settings')">⚙️ Configurações</button>
+</div>
+
+<!-- ===================== PLANEJAMENTO INICIAL ===================== -->
+<div id="planning-view" class="view active">
+  <div class="toolbar">
+    <button class="btn-primary" onclick="openNewContrato()">+ Novo Contrato</button>
+    <span style="font-size:.82rem;color:var(--txt2);margin-left:4px">Planeje e organize seus contratos antes de iniciar a execução</span>
+  </div>
+  <div id="planning-board"></div>
+</div>
+
+<!-- ===================== GESTÃO DE OBRAS ===================== -->
+<div id="gestao-view" class="view">
+  <div class="toolbar" style="gap:12px;flex-wrap:wrap">
+    <div style="display:flex;gap:2px;background:var(--bg2);border-radius:8px;padding:3px">
+      <button class="btn-vtoggle active" id="vt-kanban"     onclick="setGestaoView('kanban')">📋 Kanban</button>
+      <button class="btn-vtoggle"        id="vt-gantt"      onclick="setGestaoView('gantt')">📅 Timeline</button>
+      <button class="btn-vtoggle"        id="vt-calendario" onclick="setGestaoView('calendario')">🗓️ Calendário</button>
+    </div>
+    <div id="gestao-kanban-toolbar" style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:.82rem;color:var(--txt2)">Arraste as obras entre as colunas</span>
+    </div>
+    <div id="gestao-gantt-toolbar" style="display:none;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap">
+      <label style="font-size:.82rem;color:var(--txt2);display:flex;align-items:center;gap:5px">Obra:
+        <select id="gantt-filter" onchange="renderGantt()" style="width:auto;min-width:130px"></select>
+      </label>
+      <label style="font-size:.82rem;color:var(--txt2);display:flex;align-items:center;gap:5px">Agrupar:
+        <select id="gantt-group" onchange="renderGantt()" style="width:auto">
+          <option value="team">Equipe</option>
+          <option value="card">Obra</option>
+        </select>
+      </label>
+      <div id="gantt-teamtype-btns" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"></div>
+    </div>
+    <div id="gestao-calendario-toolbar" style="display:none;align-items:center;gap:8px;margin-left:auto">
+      <button class="btn-ghost btn-sm" onclick="_calWeekOffset--;renderCalendario()">← Anterior</button>
+      <span id="cal-week-label" style="font-size:.83rem;font-weight:700;color:var(--txt)"></span>
+      <button class="btn-ghost btn-sm" onclick="_calWeekOffset++;renderCalendario()">Próxima →</button>
+      <button class="btn-ghost btn-sm" onclick="_calWeekOffset=0;renderCalendario()">Hoje</button>
+    </div>
+  </div>
+  <div id="gestao-kanban-sub">
+    <div id="kanban-board"></div>
+  </div>
+  <div id="gestao-gantt-sub" style="display:none">
+    <div id="gantt-container">
+      <div id="gantt-legend" class="gantt-legend"></div>
+      <div class="gantt-scroll">
+        <table class="gantt-table" id="gantt-table"></table>
+      </div>
+    </div>
+  </div>
+  <div id="gestao-calendario-sub" style="display:none"></div>
+</div>
+
+<!-- ===================== CONFIGURAÇÕES ===================== -->
+<div id="settings-view" class="view">
+  <div style="max-width:920px;margin:0 auto">
+    <div style="display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:22px">
+      <button class="settings-stab active" id="stab-contracts" onclick="showSettingsTab('contracts')">📋 Tipos de Contrato</button>
+      <button class="settings-stab" id="stab-stagetemplates" onclick="showSettingsTab('stagetemplates')">🔧 Etapas</button>
+      <button class="settings-stab" id="stab-teams" onclick="showSettingsTab('teams')">👥 Equipes</button>
+      <button class="settings-stab" id="stab-teamtypes" onclick="showSettingsTab('teamtypes')">🏷️ Tipos de Equipe</button>
+      <button class="settings-stab" id="stab-phases" onclick="showSettingsTab('phases')">🗂️ Fases</button>
+    </div>
+    <div id="settings-content"></div>
+  </div>
+</div>
+
+<!-- ===================== MODAL TIPO DE CONTRATO ===================== -->
+<div class="modal-bg" id="ct-modal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <h2 id="ct-modal-title">Novo Tipo de Contrato</h2>
+      <button class="modal-close" onclick="closeCTModal()">✕</button>
+    </div>
+    <div class="modal-body" id="ct-modal-body">
+      <div class="form-group">
+        <label>Nome do tipo de contrato *</label>
+        <input type="text" id="ct-name" placeholder="Ex: Reforma Completa, Acabamento, Estrutura...">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;margin-top:4px">
+        <span style="font-size:.85rem;font-weight:600;color:var(--txt2)">Etapas e Subfases pré-definidas</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn-ghost btn-sm" onclick="openSTPicker()">📚 Da Biblioteca</button>
+          <button class="btn-primary btn-sm" onclick="addCTStage()">+ Etapa</button>
+        </div>
+      </div>
+      <div id="ct-stages"></div>
+    </div>
+    <div class="modal-footer">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost btn-sm" onclick="closeCTModal()">Cancelar</button>
+        <button class="btn-primary btn-sm" onclick="saveCT()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL OBRA ===================== -->
+<div class="modal-bg" id="card-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="card-modal-title">Obra</h2>
+      <button class="modal-close" onclick="closeCardModal()">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchCardTab('details')">📝 Detalhes</button>
+      <button class="modal-tab" onclick="switchCardTab('stages')">🔧 Etapas</button>
+      <button class="modal-tab" onclick="switchCardTab('comments')">💬 Comentários</button>
+      <button class="modal-tab" onclick="switchCardTab('files')">📎 Arquivos</button>
+    </div>
+    <div class="modal-body" id="card-modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn-danger btn-sm" onclick="deleteCard()">🗑️ Excluir Obra</button>
+      <div style="display:flex;gap:8px">
+        <button id="btn-finalize-planning" class="btn-primary btn-sm" onclick="finalizePlanning()" style="display:none;background:var(--green)">🚀 Iniciar Execução</button>
+        <button class="btn-ghost btn-sm" onclick="closeCardModal()">Fechar</button>
+        <button class="btn-primary btn-sm" onclick="saveCard()">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL EQUIPE ===================== -->
+<div class="modal-bg" id="team-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <h2 id="team-modal-title">Nova Equipe</h2>
+      <button class="modal-close" onclick="closeTeamModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nome da equipe</label>
+        <input type="text" id="tm-name" placeholder="Ex: Elétrica, Alvenaria...">
+      </div>
+      <div class="form-group">
+        <label>Tipo de equipe</label>
+        <select id="tm-type">
+          <option value="">— Nenhum tipo —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Cor da equipe</label>
+        <div class="color-picker-row" id="team-color-picker"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost btn-sm" onclick="closeTeamModal()">Cancelar</button>
+        <button class="btn-primary btn-sm" onclick="saveTeam()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL MEMBRO ===================== -->
+<div class="modal-bg" id="member-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <h2 id="member-modal-title">Novo Membro</h2>
+      <button class="modal-close" onclick="closeMemberModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nome completo *</label>
+        <input type="text" id="mb-name" placeholder="Nome do colaborador">
+      </div>
+      <div class="form-group">
+        <label>Cargo / Função</label>
+        <input type="text" id="mb-role" placeholder="Ex: Mestre de obras, Eletricista...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Telefone</label>
+          <input type="tel" id="mb-phone" placeholder="(11) 99999-9999">
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="mb-email" placeholder="email@exemplo.com">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost btn-sm" onclick="closeMemberModal()">Cancelar</button>
+        <button class="btn-primary btn-sm" onclick="saveMember()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL TIPO DE EQUIPE ===================== -->
+<div class="modal-bg" id="tt-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h2 id="tt-modal-title">Novo Tipo de Equipe</h2>
+      <button class="modal-close" onclick="closeTTModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nome do tipo *</label>
+        <input type="text" id="tt-name" placeholder="Ex: Construção, Acabamento, Instalações...">
+      </div>
+      <div class="form-group">
+        <label>Cor</label>
+        <div class="color-picker-row" id="tt-color-picker"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost btn-sm" onclick="closeTTModal()">Cancelar</button>
+        <button class="btn-primary btn-sm" onclick="saveTT()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL ETAPA DA BIBLIOTECA ===================== -->
+<div class="modal-bg" id="st-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2 id="st-modal-title">Nova Etapa</h2>
+      <button class="modal-close" onclick="closeSTModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nome da etapa *</label>
+        <input type="text" id="st-name" placeholder="Ex: Fundação, Elétrica, Alvenaria..."
+          onkeydown="if(event.key==='Enter'){event.preventDefault();addSTItem();}">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:.82rem;font-weight:600;color:var(--txt2)">Subfases</span>
+        <button class="btn-primary btn-sm" onclick="addSTItem()">+ Subfase</button>
+      </div>
+      <div id="st-items"></div>
+    </div>
+    <div class="modal-footer">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost btn-sm" onclick="closeSTModal()">Cancelar</button>
+        <button class="btn-primary btn-sm" onclick="saveST()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL PICKER DE ETAPAS ===================== -->
+<div class="modal-bg" id="st-picker-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2>📚 Adicionar da Biblioteca</h2>
+      <button class="modal-close" onclick="closeSTPicker()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.82rem;color:var(--txt2);margin-bottom:14px">Selecione as etapas que deseja adicionar ao tipo de contrato:</p>
+      <div id="st-picker-list"></div>
+    </div>
+    <div class="modal-footer">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost btn-sm" onclick="closeSTPicker()">Cancelar</button>
+        <button class="btn-primary btn-sm" onclick="addFromSTPicker()">Adicionar selecionadas</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctx-menu" style="display:none"></div>
+
+<!-- GANTT TOOLTIP -->
+<div class="gantt-tooltip" id="gantt-tip" style="display:none"></div>
+
+<script>
+'use strict';
+// ======================================================
+// PALETA E CONSTANTES
+// ======================================================
+const PAL = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#a855f7','#06b6d4','#f97316','#ec4899','#14b8a6','#6366f1','#84cc16','#f43f5e'];
+
+// ======================================================
+// ESTADO GLOBAL
+// ======================================================
+let S = { phases: [], teams: [], contractTypes: [], planningPhases: [], teamTypes: [] };
+let _gestaoView  = 'kanban';
+let _gBarDragged = false;
+
+// Estado dos modais
+let _cardPhaseId = null;
+let _cardEditing = null;  // cópia em memória da obra em edição
+let _cardTab = 'details';
+
+let _teamEditId = null;
+let _teamColor = PAL[0];
+
+let _memberTeamId = null;
+let _memberEditId = null;
+
+let _selectedTeamId = null;
+
+// Drag & drop
+let _dragCard = null;
+let _dragPhaseId = null;
+
+// Planning kanban — add column inline
+let _planningAddingCol = false;
+
+// Calendário semanal
+let _calWeekOffset = 0;
+
+// Timeline — filtro por tipo de equipe (Set de ids)
+let _ganttTeamTypeFilter = new Set();
+
+// Estado de colapso de etapas
+let _etapaCollapsed = {};
+let _autoSaveTimer  = null;
+
+// ======================================================
+// PERSISTÊNCIA
+// ======================================================
+function save() {
+  try { localStorage.setItem('gestao_obras_v3', JSON.stringify(S)); } catch(e) {}
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('gestao_obras_v3');
+    if (raw) {
+      S = JSON.parse(raw);
+      if (!S.contractTypes)   S.contractTypes   = [];
+      if (!S.planningPhases)  S.planningPhases  = [];
+      if (!S.teamTypes)       S.teamTypes       = [];
+      if (!S.stageTemplates)  S.stageTemplates  = [];
+      migrateToStageTemplates();
+      return;
+    }
+  } catch(e) {}
+  initSample();
+}
+
+function migrateToStageTemplates() {
+  // Roda uma única vez — depois a biblioteca só é alterada manualmente
+  if (S._stMigrated) return;
+  if (!S.stageTemplates) S.stageTemplates = [];
+  const existingNames = new Set(S.stageTemplates.map(t => (t.name||'').toLowerCase().trim()));
+
+  const tryAdd = (name, rawItems) => {
+    name = (name || '').trim();
+    if (!name || existingNames.has(name.toLowerCase())) return;
+    existingNames.add(name.toLowerCase());
+    S.stageTemplates.push({
+      id: uid(),
+      name,
+      items: (rawItems || []).filter(i => (i.name||'').trim()).map(it => ({
+        id: uid(),
+        name: (it.name || '').trim(),
+        workDays: parseFloat(it.workDays) || 0
+      }))
+    });
+  };
+
+  // Importa de tipos de contrato
+  for (const ct of (S.contractTypes || []))
+    for (const st of (ct.stages || []))
+      tryAdd(st.name, st.items);
+
+  // Importa de checklists de obras (apenas nesta primeira vez)
+  const allCards = [
+    ...(S.phases || []).flatMap(ph => ph.cards || []),
+    ...(S.planningPhases || []).flatMap(ph => ph.cards || [])
+  ];
+  for (const card of allCards)
+    for (const cl of (card.checklists || []))
+      tryAdd(cl.name, cl.items);
+
+  S._stMigrated = true;
+  save();
+}
+
+function initSample() {
+  const tid1 = uid(), tid2 = uid();
+  S = {
+    phases: [
+      { id: uid(), name: 'A Iniciar', color: '#6366f1', cards: [] },
+      { id: uid(), name: 'Em Andamento', color: '#f59e0b', cards: [] },
+      { id: uid(), name: 'Concluído', color: '#22c55e', cards: [] }
+    ],
+    teams: [
+      { id: tid1, name: 'Elétrica', color: '#f59e0b',
+        members: [{ id: uid(), name: 'Carlos Silva', role: 'Eletricista', phone: '(11) 98888-1111', email: 'carlos@obra.com' }] },
+      { id: tid2, name: 'Hidráulica', color: '#06b6d4',
+        members: [{ id: uid(), name: 'João Pereira', role: 'Encanador', phone: '(11) 97777-2222', email: 'joao@obra.com' }] }
+    ],
+    contractTypes: [],
+    planningPhases: [
+      { id: uid(), name: 'Em Planejamento', color: '#a855f7', cards: [] }
+    ],
+    teamTypes: [],
+    stageTemplates: []
+  };
+  save();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'gestao_obras_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      S = JSON.parse(ev.target.result);
+      if (!S.contractTypes)   S.contractTypes   = [];
+      if (!S.planningPhases)  S.planningPhases  = [];
+      if (!S.teamTypes)       S.teamTypes       = [];
+      save(); renderAll();
+      alert('Importado com sucesso!');
+    } catch { alert('Arquivo inválido.'); }
+  };
+  r.readAsText(file);
+  e.target.value = '';
+}
+
+// ======================================================
+// UTILITÁRIOS GERAIS
+// ======================================================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function fmt(d) {
+  if (!d) return '—';
+  const [y,m,dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
+}
+
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+function initials(name) {
+  if (!name) return '?';
+  return name.trim().split(/\s+/).slice(0,2).map(w => w[0].toUpperCase()).join('');
+}
+
+function getTeam(id) { return S.teams.find(t => t.id === id) || null; }
+function getMember(teamId, memberId) {
+  const t = getTeam(teamId);
+  return t ? (t.members.find(m => m.id === memberId) || null) : null;
+}
+
+function findCardById(id) {
+  for (const ph of [...S.phases, ...(S.planningPhases||[])]) {
+    const c = ph.cards.find(c => c.id === id);
+    if (c) return { card: c, phase: ph };
+  }
+  return null;
+}
+
+// ======================================================
+// FERIADOS E CÁLCULO DE DIAS ÚTEIS
+// ======================================================
+const _hcache = {}; // cache de feriados por ano
+
+function easterDate(year) {
+  // Algoritmo gregoriano anônimo
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19*a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2*e + 2*i - h - k) % 7;
+  const m = Math.floor((a + 11*h + 22*l) / 451);
+  const month = Math.floor((h + l - 7*m + 114) / 31);
+  const day = ((h + l - 7*m + 114) % 31) + 1;
+  return new Date(Date.UTC(year, month-1, day));
+}
+
+function addDaysUTC(date, n) {
+  const d = new Date(date);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d;
+}
+
+function dateToStr(d) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth()+1).padStart(2,'0');
+  const dd = String(d.getUTCDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+
+function getHolidaySet(year) {
+  if (_hcache[year]) return _hcache[year];
+  const fixed = [
+    `${year}-01-01`, // Ano Novo
+    `${year}-04-21`, // Tiradentes
+    `${year}-05-01`, // Dia do Trabalho
+    `${year}-09-07`, // Independência
+    `${year}-10-12`, // N. Sra Aparecida
+    `${year}-11-02`, // Finados
+    `${year}-11-15`, // Proclamação da República
+    `${year}-12-25`, // Natal
+  ];
+  const easter = easterDate(year);
+  const mobile = [
+    addDaysUTC(easter, -2),  // Sexta-Santa
+    addDaysUTC(easter, -48), // Carnaval segunda
+    addDaysUTC(easter, -47), // Carnaval terça
+    addDaysUTC(easter, 60),  // Corpus Christi
+  ].map(dateToStr);
+  _hcache[year] = new Set([...fixed, ...mobile]);
+  return _hcache[year];
+}
+
+function isWorkDay(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00Z');
+  const dow = d.getUTCDay(); // 0=dom 6=sab
+  if (dow === 0 || dow === 6) return false;
+  const year = d.getUTCFullYear();
+  return !getHolidaySet(year).has(dateStr);
+}
+
+// Retorna o próximo dia útil >= dateStr
+function nextWorkDay(dateStr) {
+  let d = new Date(dateStr + 'T12:00:00Z');
+  let s = dateStr;
+  while (!isWorkDay(s)) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    s = dateToStr(d);
+  }
+  return s;
+}
+
+// Retorna o próximo dia útil estritamente após dateStr
+function nextWorkDayAfter(dateStr) {
+  let d = new Date(dateStr + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + 1);
+  return nextWorkDay(dateToStr(d));
+}
+
+// Calcula data fim: startDate + workDays dias úteis (aceita 0.5)
+function calcEndDate(startStr, workDays) {
+  if (!startStr || workDays <= 0) return startStr || '';
+  let d = new Date(startStr + 'T12:00:00Z');
+  let remaining = Math.max(0, Math.ceil(workDays) - 1);
+  while (remaining > 0) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const s = dateToStr(d);
+    if (isWorkDay(s)) remaining--;
+  }
+  return dateToStr(d);
+}
+
+// ======================================================
+// VIEWS
+// ======================================================
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(name + '-view').classList.add('active');
+  const sb = document.getElementById('settings-btn');
+  if (name === 'settings') {
+    if (sb) sb.classList.add('active');
+    renderSettings();
+  } else {
+    if (sb) sb.classList.remove('active');
+    const idx = {planning:0, gestao:1}[name];
+    if (idx !== undefined) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+    if (name === 'gestao')   renderKanban();
+    if (name === 'planning') renderPlanningKanban();
+  }
+}
+
+function setGestaoView(view) {
+  _gestaoView = view;
+  ['kanban','gantt','calendario'].forEach(v => {
+    const sub = document.getElementById('gestao-'+v+'-sub');
+    const tb  = document.getElementById('gestao-'+v+'-toolbar');
+    const btn = document.getElementById('vt-'+v);
+    if (sub) sub.style.display = v === view ? '' : 'none';
+    if (tb)  tb.style.display  = v === view ? '' : 'none';
+    if (btn) btn.classList.toggle('active', v === view);
+  });
+  if (view === 'gantt')      renderGantt();
+  if (view === 'calendario') renderCalendario();
+}
+
+function renderAll() {
+  renderKanban();
+  renderPlanningKanban();
+  if (document.getElementById('teams-list')) renderTeams();
+}
+
+// ======================================================
+// KANBAN
+// ======================================================
+function renderKanban() {
+  const board = document.getElementById('kanban-board');
+  if (!board) return;
+  board.innerHTML = '';
+  S.phases.forEach(ph => board.appendChild(buildCol(ph, false)));
+}
+
+function renderPlanningKanban() {
+  const board = document.getElementById('planning-board');
+  if (!board) return;
+  const phases = S.planningPhases || [];
+  board.innerHTML = '';
+
+  if (phases.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = '<div class="icon">📋</div><p>Nenhuma fase de planejamento. Adicione uma lista abaixo.</p>';
+    board.appendChild(empty);
+  }
+
+  phases.forEach(ph => board.appendChild(buildCol(ph, true)));
+
+  // Botão "Adicionar lista" estilo Trello
+  const addColEl = document.createElement('div');
+  addColEl.style.cssText = 'min-width:240px;flex-shrink:0;align-self:flex-start';
+  if (_planningAddingCol) {
+    addColEl.innerHTML = `
+      <div style="background:var(--bg1);border-radius:14px;padding:14px;border:1px solid var(--border);box-shadow:var(--shadow-sm)">
+        <input type="text" id="new-col-name" placeholder="Nome da lista..."
+          style="width:100%;margin-bottom:10px"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();confirmAddPlanningPhase();}if(event.key==='Escape'){_planningAddingCol=false;renderPlanningKanban();}">
+        <div style="display:flex;gap:6px">
+          <button class="btn-primary btn-sm" onclick="confirmAddPlanningPhase()">Adicionar lista</button>
+          <button class="btn-ghost btn-sm" onclick="_planningAddingCol=false;renderPlanningKanban()">✕</button>
+        </div>
+      </div>`;
+    setTimeout(() => document.getElementById('new-col-name')?.focus(), 30);
+  } else {
+    addColEl.innerHTML = `
+      <button onclick="_planningAddingCol=true;renderPlanningKanban()"
+        style="width:100%;padding:12px 18px;background:rgba(255,255,255,.55);border:2px dashed var(--border);border-radius:14px;font-size:.84rem;font-weight:600;color:var(--txt2);cursor:pointer;transition:.15s;text-align:left"
+        onmouseover="this.style.background='rgba(0,0,0,.06)'" onmouseout="this.style.background='rgba(255,255,255,.55)'">
+        + Adicionar outra lista
+      </button>`;
+  }
+  board.appendChild(addColEl);
+}
+
+function confirmAddPlanningPhase() {
+  const inp = document.getElementById('new-col-name');
+  const name = (inp?.value || '').trim();
+  if (!name) { inp?.focus(); return; }
+  if (!S.planningPhases) S.planningPhases = [];
+  S.planningPhases.push({ id: uid(), name, color: PAL[S.planningPhases.length % PAL.length], cards: [] });
+  _planningAddingCol = false;
+  save(); renderPlanningKanban();
+}
+
+function openNewContrato() {
+  if (!S.planningPhases || S.planningPhases.length === 0) {
+    S.planningPhases = [{ id: uid(), name: 'Em Planejamento', color: '#a855f7', cards: [] }];
+    save();
+  }
+  openCardModal(null, S.planningPhases[0].id);
+}
+
+function openAddPlanningPhase() {
+  _planningAddingCol = true;
+  renderPlanningKanban();
+}
+
+function buildCol(ph, isPlanning) {
+  const col = document.createElement('div');
+  col.className = 'kanban-col';
+  col.dataset.pid = ph.id;
+
+  col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drag-over'); });
+  col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+  col.addEventListener('drop', e => {
+    e.preventDefault();
+    col.classList.remove('drag-over');
+    if (!_dragCard || !_dragPhaseId) return;
+    const srcIsPlanning = (S.planningPhases||[]).some(p => p.id === _dragPhaseId);
+    if (srcIsPlanning !== !!isPlanning) return;
+    const srcPhases = isPlanning ? (S.planningPhases||[]) : S.phases;
+    const src = srcPhases.find(p => p.id === _dragPhaseId);
+    if (src) src.cards = src.cards.filter(c => c.id !== _dragCard.id);
+    ph.cards.push(_dragCard);
+    _dragCard = null; _dragPhaseId = null;
+    save();
+    if (isPlanning) renderPlanningKanban(); else renderKanban();
+  });
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'col-header';
+  hdr.innerHTML = `
+    <div class="col-title" onclick="renamePhase('${ph.id}')" title="Clique para renomear">${esc(ph.name)}</div>
+    <span class="col-count">${ph.cards.length}</span>
+    <button class="col-menu-btn" onclick="showPhaseMenu(event,'${ph.id}',${isPlanning?1:0})">⋯</button>`;
+
+  // Cards
+  const cardsDiv = document.createElement('div');
+  cardsDiv.className = 'col-cards';
+  ph.cards.forEach(card => cardsDiv.appendChild(buildCard(card, ph.id)));
+
+  const addCard = document.createElement('div');
+  addCard.className = 'col-add';
+  addCard.innerHTML = `<button onclick="openCardModal(null,'${ph.id}')">+ Adicionar obra</button>`;
+  col.append(hdr, cardsDiv, addCard);
+  return col;
+}
+
+function buildCard(card, phaseId) {
+  const el = document.createElement('div');
+  el.className = 'kanban-card';
+  el.draggable = true;
+  el.addEventListener('dragstart', e => {
+    el.classList.add('dragging');
+    _dragCard = card; _dragPhaseId = phaseId;
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  el.onclick = () => openCardModal(card.id, phaseId);
+
+  // Tipo de contrato
+  const ct = (S.contractTypes||[]).find(c => c.id === card.contractTypeId);
+
+  // Progresso global
+  let total = 0, done = 0;
+  for (const cl of (card.checklists||[])) {
+    for (const it of (cl.items||[])) { total++; if (it.done) done++; }
+  }
+  const pct = total > 0 ? Math.round((done/total)*100) : -1;
+
+  // Etapa ativa: primeira não finalizada que foi iniciada, ou primeira não finalizada
+  let activeStage = null, activeSub = null;
+  for (const cl of (card.checklists||[])) {
+    if (!cl.finishedAt) {
+      activeStage = cl;
+      activeSub = (cl.items||[]).find(i => !i.done) || null;
+      break;
+    }
+  }
+
+  let html = `<div class="card-title">${esc(card.name||'Sem título')}</div>`;
+
+  // Chip do tipo de contrato
+  if (ct) {
+    html += `<div style="margin-bottom:7px">
+      <span class="card-tag" style="background:var(--accent)22;color:var(--accent)">📋 ${esc(ct.name)}</span>
+    </div>`;
+  }
+
+  // Etapa e subfase atual
+  if (activeStage) {
+    const stagePct = (() => {
+      const t = (activeStage.items||[]).length;
+      const d2 = (activeStage.items||[]).filter(i=>i.done).length;
+      return t > 0 ? Math.round((d2/t)*100) : 0;
+    })();
+    const stBadge = activeStage.startedAt
+      ? (activeStage.finishedAt
+          ? `<span style="font-size:.66rem;padding:1px 6px;border-radius:99px;background:rgba(34,197,94,.15);color:var(--green);font-weight:600">✅</span>`
+          : `<span style="font-size:.66rem;padding:1px 6px;border-radius:99px;background:rgba(245,158,11,.15);color:var(--yellow);font-weight:600">▶</span>`)
+      : '';
+    html += `<div style="background:var(--bg3);border-radius:6px;padding:7px 9px;margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">
+        ${stBadge}
+        <span style="font-size:.78rem;font-weight:700;color:var(--txt)">${esc(activeStage.name)}</span>
+        <span style="font-size:.7rem;color:var(--txt2);margin-left:auto">${stagePct}%</span>
+      </div>`;
+    if (activeSub) {
+      html += `<div style="font-size:.73rem;color:var(--txt2)">↳ ${esc(activeSub.name)}</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Barra de progresso global
+  if (pct >= 0) {
+    const barColor = pct >= 100 ? 'var(--green)' : pct > 0 ? 'var(--accent)' : 'var(--bg3)';
+    html += `<div class="card-progress">
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      <div class="progress-txt">${done}/${total} subfases · ${pct}%</div>
+    </div>`;
+  }
+
+  // Ícones rápidos
+  const hasC = (card.comments||[]).length > 0;
+  const hasF = (card.files||[]).length > 0;
+  if (hasC || hasF) {
+    html += `<div class="card-meta" style="margin-top:6px">
+      ${hasC?`<span style="font-size:.72rem;color:var(--txt2)">💬 ${card.comments.length}</span>`:''}
+      ${hasF?`<span style="font-size:.72rem;color:var(--txt2)">📎 ${card.files.length}</span>`:''}
+    </div>`;
+  }
+
+  el.innerHTML = html;
+  return el;
+}
+
+// ======================================================
+// FASE — AÇÕES
+// ======================================================
+function openAddPhase() {
+  const name = prompt('Nome da nova fase:');
+  if (!name || !name.trim()) return;
+  S.phases.push({ id: uid(), name: name.trim(), color: PAL[S.phases.length % PAL.length], cards: [] });
+  save(); renderKanban();
+}
+
+function findPhase(phId) {
+  return S.phases.find(p => p.id === phId) || (S.planningPhases||[]).find(p => p.id === phId) || null;
+}
+
+function isPhaseP(phId) {
+  return (S.planningPhases||[]).some(p => p.id === phId);
+}
+
+function renderPhaseKanban(phId) {
+  if (isPhaseP(phId)) renderPlanningKanban(); else renderKanban();
+}
+
+function renamePhase(phId) {
+  const ph = findPhase(phId);
+  if (!ph) return;
+  const name = prompt('Novo nome da fase:', ph.name);
+  if (!name || !name.trim()) return;
+  ph.name = name.trim();
+  save(); renderPhaseKanban(phId);
+}
+
+function showPhaseMenu(e, phId, isP) {
+  e.stopPropagation();
+  closeCtxMenu();
+  const menu = document.getElementById('ctx-menu');
+  menu.innerHTML = '';
+
+  const mkBtn = (label, fn, cls) => {
+    const b = document.createElement('button');
+    b.textContent = label; if (cls) b.className = cls;
+    b.onclick = () => { closeCtxMenu(); fn(); };
+    return b;
+  };
+
+  menu.appendChild(mkBtn('✏️ Renomear fase', () => renamePhase(phId)));
+  menu.appendChild(mkBtn('🎨 Alterar cor', () => changePhaseColorPrompt(phId)));
+  menu.appendChild(document.createElement('hr'));
+  menu.appendChild(mkBtn('🗑️ Excluir fase', () => {
+    const ph = findPhase(phId);
+    if (!ph) return;
+    if (ph.cards.length && !confirm(`A fase "${ph.name}" tem ${ph.cards.length} obra(s). Excluir?`)) return;
+    if (isP) S.planningPhases = S.planningPhases.filter(p => p.id !== phId);
+    else     S.phases = S.phases.filter(p => p.id !== phId);
+    save(); renderPhaseKanban(phId);
+  }, 'danger'));
+
+  menu.style.display = 'block';
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 190) + 'px';
+  menu.style.top = Math.min(e.clientY + 4, window.innerHeight - 140) + 'px';
+}
+
+function changePhaseColorPrompt(phId) {
+  const ph = findPhase(phId);
+  if (!ph) return;
+  const opts = PAL.map((c,i) => `${i+1}. ${c}`).join('\n');
+  const input = prompt(`Escolha um número ou cole uma cor hex:\n${opts}`, ph.color);
+  if (!input) return;
+  const n = parseInt(input);
+  if (n >= 1 && n <= PAL.length) ph.color = PAL[n-1];
+  else if (/^#[0-9a-fA-F]{6}$/.test(input.trim())) ph.color = input.trim();
+  else { alert('Valor inválido.'); return; }
+  save(); renderPhaseKanban(phId);
+}
+
+function closeCtxMenu() {
+  document.getElementById('ctx-menu').style.display = 'none';
+}
+document.addEventListener('click', closeCtxMenu);
+
+// ======================================================
+// MODAL OBRA — ABERTURA
+// ======================================================
+function openCardModal(cardId, phaseId) {
+  _cardPhaseId = phaseId;
+  if (cardId) {
+    const found = findCardById(cardId);
+    if (!found) return;
+    _cardPhaseId = found.phase.id;
+    _cardEditing = JSON.parse(JSON.stringify(found.card));
+  } else {
+    _cardEditing = {
+      id: uid(), name: '', description: '',
+      checklists: [], comments: [], files: []
+    };
+  }
+  // Colapsa todas as etapas ao abrir
+  _etapaCollapsed = {};
+  (_cardEditing.checklists || []).forEach(cl => { _etapaCollapsed[cl.id] = true; });
+
+  document.getElementById('card-modal-title').textContent = cardId ? 'Editar Obra' : 'Nova Obra';
+  _cardTab = 'details';
+  document.querySelectorAll('.modal-tab').forEach((b,i) => b.classList.toggle('active', i===0));
+  renderCardBody();
+  const inPlanning = (S.planningPhases||[]).some(p => p.id === _cardPhaseId);
+  const btnFP = document.getElementById('btn-finalize-planning');
+  if (btnFP) btnFP.style.display = inPlanning ? '' : 'none';
+  document.getElementById('card-modal').classList.add('open');
+}
+
+function closeCardModal() {
+  document.getElementById('card-modal').classList.remove('open');
+  _cardEditing = null;
+}
+
+function switchCardTab(tab) {
+  _cardTab = tab;
+  const tabs = ['details','stages','comments','files'];
+  document.querySelectorAll('.modal-tab').forEach((b,i) => b.classList.toggle('active', tabs[i]===tab));
+  collectDetailsFromDOM(); // salva detalhes antes de trocar aba
+  renderCardBody();
+}
+
+function collectDetailsFromDOM() {
+  if (!_cardEditing) return;
+  const n  = document.getElementById('cd-name');
+  const d  = document.getElementById('cd-desc');
+  const ct = document.getElementById('cd-contract');
+  const os = document.getElementById('cd-obra-start');
+  const od = document.getElementById('cd-obra-days');
+  if (n)  _cardEditing.name = n.value;
+  if (d)  _cardEditing.description = d.value;
+  if (ct) _cardEditing.contractTypeId = ct.value || null;
+  if (os) _cardEditing.obraStartDate = os.value;
+  if (od) _cardEditing.obraWorkDays = parseInt(od.value) || 0;
+}
+
+function renderCardBody() {
+  const body = document.getElementById('card-modal-body');
+  if (!body || !_cardEditing) return;
+  switch(_cardTab) {
+    case 'details':
+      body.innerHTML = buildDetailsHTML();
+      // Auto-save em texto
+      body.querySelector('#cd-name')?.addEventListener('input', scheduleAutoSave);
+      body.querySelector('#cd-desc')?.addEventListener('input', scheduleAutoSave);
+      body.querySelector('#cd-contract')?.addEventListener('change', () => { collectDetailsFromDOM(); autoSaveCard(); });
+      break;
+    case 'stages':   body.innerHTML = buildStagesHTML(); attachStagesListeners(); break;
+    case 'comments': body.innerHTML = buildCommentsHTML(); break;
+    case 'files':    body.innerHTML = buildFilesHTML(); attachFilesListeners(); break;
+  }
+}
+
+// ---- ABA DETALHES ----
+function buildDetailsHTML() {
+  const ctOpts = (S.contractTypes || []).map(ct =>
+    `<option value="${ct.id}" ${_cardEditing.contractTypeId===ct.id?'selected':''}>${esc(ct.name)}</option>`
+  ).join('');
+
+  const obraStart = _cardEditing.obraStartDate || '';
+  const obraDays  = _cardEditing.obraWorkDays  || 0;
+  const obraEnd   = _cardEditing.obraEndDate   || '';
+
+  return `
+    <div class="form-group">
+      <label>Nome da obra *</label>
+      <input type="text" id="cd-name" value="${esc(_cardEditing.name)}" placeholder="Nome da obra...">
+    </div>
+    <div class="form-row" style="align-items:flex-end">
+      <div class="form-group" style="margin-bottom:0">
+        <label>Tipo de contrato</label>
+        <select id="cd-contract">
+          <option value="">— Selecione —</option>${ctOpts}
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label style="opacity:0">.</label>
+        <button class="btn-ghost btn-sm" onclick="applyContractType()" style="width:100%;height:36px">📋 Aplicar etapas predefinidas</button>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:14px">
+      <label>Descrição / Observações</label>
+      <textarea id="cd-desc" rows="3" placeholder="Endereço, descrição, notas...">${esc(_cardEditing.description)}</textarea>
+    </div>
+    <div style="background:var(--bg2);border-radius:8px;padding:14px;border:1px solid var(--border);margin-top:4px">
+      <div style="font-size:.82rem;font-weight:700;color:var(--accent);margin-bottom:12px">📅 Período de Obra</div>
+      <div class="form-row-3">
+        <div class="form-group" style="margin:0">
+          <label>Data início</label>
+          <input type="date" id="cd-obra-start" value="${obraStart}" oninput="recalcObraPeriod()">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Dias úteis</label>
+          <input type="number" id="cd-obra-days" min="0" value="${obraDays}" oninput="recalcObraPeriod()">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Data fim</label>
+          <input type="date" id="cd-obra-end" value="${obraEnd}" onchange="updateObraEndManual()" title="Edite para recalcular os dias úteis automaticamente">
+        </div>
+      </div>
+      <div id="cd-obra-chip" style="margin-top:10px;display:flex;gap:8px;${obraEnd?'':'display:none'}">
+        ${obraEnd ? `<span class="date-chip">📅 Início: ${fmt(obraStart)}</span><span class="date-chip end-date">🏁 Término previsto: ${fmt(obraEnd)}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+// ---- ABA ETAPAS ----
+function buildStagesHTML() {
+  const cls = _cardEditing.checklists || [];
+  let h = `<div class="checklist-section">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+      <button class="btn-primary btn-sm" id="btn-add-etapa">+ Adicionar Etapa</button>
+    </div>`;
+
+  if (cls.length === 0) {
+    h += '<div class="empty-state"><div class="icon">🔧</div><p>Nenhuma etapa. Clique em "Adicionar Etapa".</p></div>';
+  }
+
+  cls.forEach((cl, ci) => {
+    const total    = (cl.items||[]).length;
+    const done     = (cl.items||[]).filter(i => i.done).length;
+    const pct      = total > 0 ? Math.round((done/total)*100) : 0;
+    const totalDu  = (cl.items||[]).reduce((s,i) => s + (parseFloat(i.workDays)||0), 0);
+    const datesSet = (cl.items||[]).filter(i => i.startDate && i.endDate);
+    const pStart   = datesSet.length ? datesSet[0].startDate : null;
+    const pEnd     = datesSet.length ? datesSet[datesSet.length-1].endDate : null;
+    const collapsed = !!_etapaCollapsed[cl.id];
+
+    let statusBadge = '', actionBtns = '';
+    if (!cl.startedAt) {
+      statusBadge = `<span style="font-size:.72rem;padding:2px 8px;border-radius:99px;background:var(--bg3);color:var(--txt2);font-weight:600">Não iniciada</span>`;
+      actionBtns  = `<button class="btn-ghost btn-sm" data-start-etapa="${cl.id}" style="color:var(--accent);border-color:var(--accent)">▶ Iniciar</button>`;
+    } else if (!cl.finishedAt) {
+      statusBadge = `<span style="font-size:.72rem;padding:2px 8px;border-radius:99px;background:rgba(245,158,11,.15);color:var(--yellow);font-weight:600">▶ Em andamento</span>`;
+      actionBtns  = `<button class="btn-ghost btn-sm" data-finish-etapa="${cl.id}" style="color:var(--green);border-color:var(--green)">✅ Finalizar</button>`;
+    } else {
+      statusBadge = `<span style="font-size:.72rem;padding:2px 8px;border-radius:99px;background:rgba(34,197,94,.15);color:var(--green);font-weight:600">✅ Concluída</span>`;
+      actionBtns  = `<button class="btn-ghost btn-sm" data-reopen-etapa="${cl.id}" style="font-size:.75rem">↩ Reabrir</button>`;
+    }
+
+    const barColor = pct>=100?'var(--green)':pct>0?'var(--accent)':'var(--bg3)';
+
+    h += `<div class="etapa-block" data-clid="${cl.id}" style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px">
+      <!-- Header da Etapa -->
+      <div style="display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--bg2);flex-wrap:wrap">
+        <span class="etapa-label">Etapa ${ci+1}</span>
+        <input type="text" value="${esc(cl.name)}" placeholder="Nome da etapa"
+          data-cl-name="${cl.id}" style="flex:1;min-width:100px;max-width:200px;font-weight:700">
+        ${statusBadge}
+        <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${actionBtns}
+          <button class="btn-ghost btn-sm" data-add-sub="${cl.id}">+ Sub</button>
+          <button class="btn-ghost btn-sm" data-toggle-etapa="${cl.id}" style="min-width:36px;text-align:center">${collapsed?'▸':'▾'}</button>
+          <button class="btn-danger btn-sm" data-del-etapa="${cl.id}">✕</button>
+        </div>
+      </div>
+      <!-- Sumário da Etapa -->
+      <div style="padding:7px 14px;background:var(--bg1);border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:100px">
+          <div style="height:5px;background:var(--bg3);border-radius:99px;overflow:hidden;margin-bottom:3px">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:99px;transition:.3s"></div>
+          </div>
+          <div style="font-size:.71rem;color:var(--txt2)">${done}/${total} subfases · ${pct}%</div>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;font-size:.71rem">
+          ${totalDu?`<span class="date-chip">⏱️ ${totalDu} d.u.</span>`:''}
+          ${pStart?`<span class="date-chip">📅 Prev.: ${fmt(pStart)} → ${fmt(pEnd)}</span>`:''}
+          ${cl.startedAt?`<span class="date-chip" style="color:var(--yellow)">▶ Real: ${fmt(cl.startedAt)}${cl.finishedAt?' → '+fmt(cl.finishedAt):' → hoje'}</span>`:''}
+        </div>
+      </div>
+      <!-- Subfases -->
+      <div id="subs-${cl.id}" style="${collapsed?'display:none':''}">`;
+
+    if (!cl.items || cl.items.length === 0) {
+      h += '<div style="font-size:.78rem;color:var(--txt2);padding:4px 0 8px">Sem subfases ainda.</div>';
+    } else {
+      cl.items.forEach((it, ii) => {
+        const tOpts = (() => {
+          const noType = (S.teams||[]).filter(t => !t.typeId);
+          const byType = (S.teamTypes||[]).map(tt => ({
+            tt, teams: (S.teams||[]).filter(t => t.typeId === tt.id)
+          })).filter(g => g.teams.length > 0);
+          let opts = '';
+          noType.forEach(t => {
+            opts += `<option value="${t.id}" ${it.teamId===t.id?'selected':''}>${esc(t.name)}</option>`;
+          });
+          byType.forEach(g => {
+            opts += `<optgroup label="${esc(g.tt.name)}">`;
+            g.teams.forEach(t => {
+              opts += `<option value="${t.id}" ${it.teamId===t.id?'selected':''}>${esc(t.name)}</option>`;
+            });
+            opts += '</optgroup>';
+          });
+          return opts;
+        })();
+
+        // Opções de dependência
+        let depOpts = '<option value="">— Sem dependência —</option>';
+        cls.forEach((cl2, ci2) => {
+          (cl2.items||[]).forEach((it2, ii2) => {
+            if (it2.id !== it.id) {
+              depOpts += `<option value="${it2.id}" ${it.dependsOn===it2.id?'selected':''}>
+                ${ci2+1}.${ii2+1} ${esc(it2.name||'Subfase')}</option>`;
+            }
+          });
+        });
+
+        // Calcular data fim para exibir
+        let endDisplay = '';
+        if (it.startDate && it.workDays > 0) {
+          const adjStart = nextWorkDay(it.startDate);
+          endDisplay = calcEndDate(adjStart, it.workDays);
+        }
+
+        h += `<div class="subfase-row" id="sr-${it.id}" draggable="true" data-drag-id="${cl.id}|${it.id}"
+          style="padding:8px 12px;border-top:1px solid var(--border);background:${it.done?'rgba(34,197,94,.04)':''}">
+          <div class="subfase-row-header">
+            <span class="drag-handle" title="Arrastar para reordenar">⠿</span>
+            <span class="subfase-num" style="color:var(--txt2)">${ci+1}.${ii+1}</span>
+            <input type="text" value="${esc(it.name)}" placeholder="Nome da subfase"
+              style="flex:1;${it.done?'text-decoration:line-through;opacity:.6':''}" data-it-name="${cl.id}|${it.id}">
+            <label style="display:flex;align-items:center;gap:5px;font-size:.76rem;color:var(--txt2);flex-shrink:0">
+              <input type="checkbox" ${it.done?'checked':''} data-it-done="${cl.id}|${it.id}"> Feita
+            </label>
+            <button class="btn-danger btn-sm" data-del-sub="${cl.id}|${it.id}">✕</button>
+          </div>
+          <div class="form-row" style="margin:6px 0 4px">
+            <div class="form-group" style="margin:0">
+              <label>Equipe</label>
+              <select data-it-team="${cl.id}|${it.id}" id="sel-team-${it.id}">
+                <option value="">— Nenhuma —</option>${tOpts}
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>Dias úteis (0.5 = meio dia)</label>
+              <input type="number" min="0" step="0.5" value="${it.workDays||0}" data-it-days="${cl.id}|${it.id}">
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:4px">
+            <div class="form-group" style="margin:0">
+              <label>Data início</label>
+              <input type="date" value="${it.startDate||''}" data-it-start="${cl.id}|${it.id}">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>Depende de</label>
+              <select data-it-dep="${cl.id}|${it.id}">${depOpts}</select>
+            </div>
+          </div>
+          <div class="calc-dates" id="cd-dates-${it.id}">
+            ${it.startDate ? `<span class="date-chip">📅 Início: ${fmt(nextWorkDay(it.startDate))}</span>` : ''}
+            ${endDisplay ? `<span class="date-chip end-date">🏁 Fim: ${fmt(endDisplay)}</span>` : ''}
+            ${it.dependsOn ? '<span class="date-chip dep-date">⛓️ Dependência ativa</span>' : ''}
+          </div>
+        </div>`;
+      });
+    }
+    h += `</div></div>`; // fecha subs-div e etapa-block
+  });
+
+  h += '</div>';
+  return h;
+}
+
+function attachStagesListeners() {
+  const body = document.getElementById('card-modal-body');
+  if (!body) return;
+
+  // Toggle colapso de etapa
+  body.querySelectorAll('[data-toggle-etapa]').forEach(btn => {
+    btn.onclick = () => {
+      const clId = btn.dataset.toggleEtapa;
+      _etapaCollapsed[clId] = !_etapaCollapsed[clId];
+      const subsDiv = document.getElementById('subs-' + clId);
+      if (subsDiv) subsDiv.style.display = _etapaCollapsed[clId] ? 'none' : '';
+      const cl = (_cardEditing.checklists||[]).find(c => c.id === clId);
+      btn.textContent = (_etapaCollapsed[clId] ? '▸' : '▾');
+    };
+  });
+
+  // Iniciar etapa
+  body.querySelectorAll('[data-start-etapa]').forEach(btn => {
+    btn.onclick = () => {
+      syncNamesFromDOM();
+      const cl = (_cardEditing.checklists||[]).find(c => c.id === btn.dataset.startEtapa);
+      if (cl) { cl.startedAt = dateToStr(new Date()); autoSaveCard(); renderCardBody(); }
+    };
+  });
+
+  // Finalizar etapa
+  body.querySelectorAll('[data-finish-etapa]').forEach(btn => {
+    btn.onclick = () => {
+      syncNamesFromDOM();
+      const cl = (_cardEditing.checklists||[]).find(c => c.id === btn.dataset.finishEtapa);
+      if (cl) { cl.finishedAt = dateToStr(new Date()); autoSaveCard(); renderCardBody(); }
+    };
+  });
+
+  // Reabrir etapa
+  body.querySelectorAll('[data-reopen-etapa]').forEach(btn => {
+    btn.onclick = () => {
+      const cl = (_cardEditing.checklists||[]).find(c => c.id === btn.dataset.reopenEtapa);
+      if (cl) { cl.finishedAt = null; cl.startedAt = null; autoSaveCard(); renderCardBody(); }
+    };
+  });
+
+  // Adicionar etapa
+  const btnAddEtapa = body.querySelector('#btn-add-etapa');
+  if (btnAddEtapa) {
+    btnAddEtapa.onclick = () => {
+      syncNamesFromDOM();
+      if (!_cardEditing.checklists) _cardEditing.checklists = [];
+      _cardEditing.checklists.push({ id: uid(), name: 'Nova Etapa', items: [], startedAt: null, finishedAt: null });
+      renderCardBody();
+    };
+  }
+
+  // Renomear etapa + Enter cria próxima etapa
+  body.querySelectorAll('[data-cl-name]').forEach(inp => {
+    inp.onchange = () => {
+      const clId = inp.dataset.clName;
+      const cl = _cardEditing.checklists.find(c => c.id === clId);
+      if (cl) cl.name = inp.value;
+    };
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      syncNamesFromDOM();
+      if (!_cardEditing.checklists) _cardEditing.checklists = [];
+      _cardEditing.checklists.push({ id: uid(), name: 'Nova Etapa', items: [], startedAt: null, finishedAt: null });
+      renderCardBody();
+      setTimeout(() => {
+        const all = body.querySelectorAll('[data-cl-name]');
+        if (all.length) all[all.length - 1].focus();
+      }, 30);
+    });
+  });
+
+  // Adicionar subfase
+  body.querySelectorAll('[data-add-sub]').forEach(btn => {
+    btn.onclick = () => {
+      syncNamesFromDOM();
+      const clId = btn.dataset.addSub;
+      const cl = _cardEditing.checklists.find(c => c.id === clId);
+      if (!cl) return;
+      if (!cl.items) cl.items = [];
+      cl.items.push({ id: uid(), name: '', teamId: '', memberId: '', workDays: 0, startDate: '', endDate: '', dependsOn: null, done: false });
+      renderCardBody();
+    };
+  });
+
+  // Deletar etapa
+  body.querySelectorAll('[data-del-etapa]').forEach(btn => {
+    btn.onclick = () => {
+      if (!confirm('Remover esta etapa e todas suas subfases?')) return;
+      const clId = btn.dataset.delEtapa;
+      _cardEditing.checklists = _cardEditing.checklists.filter(c => c.id !== clId);
+      renderCardBody();
+    };
+  });
+
+  // Deletar subfase
+  body.querySelectorAll('[data-del-sub]').forEach(btn => {
+    btn.onclick = () => {
+      const [clId, itId] = btn.dataset.delSub.split('|');
+      const cl = _cardEditing.checklists.find(c => c.id === clId);
+      if (cl) cl.items = cl.items.filter(i => i.id !== itId);
+      renderCardBody();
+    };
+  });
+
+  // Nome da subfase
+  body.querySelectorAll('[data-it-name]').forEach(inp => {
+    inp.onchange = () => {
+      const [clId, itId] = inp.dataset.itName.split('|');
+      const it = getItem(clId, itId);
+      if (it) it.name = inp.value;
+    };
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const [clId, itId] = inp.dataset.itName.split('|');
+      syncNamesFromDOM();
+      const cl = (_cardEditing.checklists||[]).find(c => c.id === clId);
+      if (!cl) return;
+      const idx = cl.items.findIndex(i => i.id === itId);
+      const newId = uid();
+      cl.items.splice(idx + 1, 0, {
+        id: newId, name: '', teamId: '', memberId: '',
+        workDays: 0, startDate: '', endDate: '',
+        dependsOn: null, done: false
+      });
+      renderCardBody();
+      setTimeout(() => {
+        const el = body.querySelector(`[data-it-name="${clId}|${newId}"]`);
+        if (el) el.focus();
+      }, 30);
+    });
+  });
+
+  // Drag & drop reorder subfases (dentro da mesma etapa)
+  let _sfDragId = null, _sfDragClId = null;
+  body.querySelectorAll('.subfase-row[draggable]').forEach(row => {
+    row.addEventListener('dragstart', e => {
+      const [clId, itId] = row.dataset.dragId.split('|');
+      _sfDragClId = clId; _sfDragId = itId;
+      row.style.opacity = '.35';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', () => {
+      row.style.opacity = '';
+      body.querySelectorAll('.subfase-row').forEach(r =>
+        r.classList.remove('sf-drag-over-top','sf-drag-over-bot'));
+    });
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      body.querySelectorAll('.subfase-row').forEach(r =>
+        r.classList.remove('sf-drag-over-top','sf-drag-over-bot'));
+      const mid = row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2;
+      row.classList.add(e.clientY < mid ? 'sf-drag-over-top' : 'sf-drag-over-bot');
+    });
+    row.addEventListener('dragleave', () =>
+      row.classList.remove('sf-drag-over-top','sf-drag-over-bot'));
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      row.classList.remove('sf-drag-over-top','sf-drag-over-bot');
+      const [tClId, tItId] = row.dataset.dragId.split('|');
+      if (tItId === _sfDragId || tClId !== _sfDragClId) return;
+      const cl = (_cardEditing.checklists||[]).find(c => c.id === _sfDragClId);
+      if (!cl) return;
+      syncNamesFromDOM();
+      const srcIdx = cl.items.findIndex(i => i.id === _sfDragId);
+      const mid = row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2;
+      const after = e.clientY >= mid;
+      const [item] = cl.items.splice(srcIdx, 1);
+      const tgtIdx = cl.items.findIndex(i => i.id === tItId);
+      cl.items.splice(tgtIdx + (after ? 1 : 0), 0, item);
+      renderCardBody();
+    });
+  });
+
+  // Done checkbox
+  body.querySelectorAll('[data-it-done]').forEach(cb => {
+    cb.onchange = () => {
+      const [clId, itId] = cb.dataset.itDone.split('|');
+      const it = getItem(clId, itId);
+      if (it) { it.done = cb.checked; autoSaveCard(); renderCardBody(); }
+    };
+  });
+
+  // Equipe
+  body.querySelectorAll('[data-it-team]').forEach(sel => {
+    sel.onchange = () => {
+      const [clId, itId] = sel.dataset.itTeam.split('|');
+      const it = getItem(clId, itId);
+      if (!it) return;
+      it.teamId = sel.value;
+    };
+  });
+
+  // Dias úteis
+  body.querySelectorAll('[data-it-days]').forEach(inp => {
+    inp.onchange = () => {
+      const [clId, itId] = inp.dataset.itDays.split('|');
+      const it = getItem(clId, itId);
+      if (!it) return;
+      it.workDays = parseFloat(inp.value) || 0;
+      recalcItem(it);
+      recalcDependents();
+      refreshDatesDisplay(itId, it);
+      scheduleAutoSave();
+    };
+  });
+
+  // Data início
+  body.querySelectorAll('[data-it-start]').forEach(inp => {
+    inp.onchange = () => {
+      const [clId, itId] = inp.dataset.itStart.split('|');
+      const it = getItem(clId, itId);
+      if (!it) return;
+      it.startDate = inp.value;
+      recalcItem(it);
+      recalcDependents();
+      refreshDatesDisplay(itId, it);
+      scheduleAutoSave();
+    };
+  });
+
+  // Dependência
+  body.querySelectorAll('[data-it-dep]').forEach(sel => {
+    sel.onchange = () => {
+      const [clId, itId] = sel.dataset.itDep.split('|');
+      const it = getItem(clId, itId);
+      if (!it) return;
+      it.dependsOn = sel.value || null;
+      if (it.dependsOn) {
+        let dep = null;
+        for (const c of _cardEditing.checklists) {
+          dep = c.items.find(x => x.id === it.dependsOn);
+          if (dep) break;
+        }
+        if (dep && dep.endDate) {
+          it.startDate = nextWorkDayAfter(dep.endDate);
+          recalcItem(it);
+        }
+      }
+      recalcDependents();
+      scheduleAutoSave();
+      renderCardBody();
+    };
+  });
+}
+
+function getItem(clId, itId) {
+  const cl = (_cardEditing.checklists || []).find(c => c.id === clId);
+  return cl ? cl.items.find(i => i.id === itId) : null;
+}
+
+function recalcItem(it) {
+  if (!it.startDate) { it.endDate = ''; return; }
+  it.startDate = nextWorkDay(it.startDate);
+  it.endDate = it.workDays > 0 ? calcEndDate(it.startDate, it.workDays) : it.startDate;
+}
+
+function recalcDependents() {
+  // Iterações até estabilizar
+  for (let pass = 0; pass < 30; pass++) {
+    let changed = false;
+    for (const cl of (_cardEditing.checklists || [])) {
+      for (const it of (cl.items || [])) {
+        if (!it.dependsOn) continue;
+        let dep = null;
+        for (const c of _cardEditing.checklists) {
+          dep = c.items.find(x => x.id === it.dependsOn);
+          if (dep) break;
+        }
+        if (!dep || !dep.endDate) continue;
+        const minStart = nextWorkDayAfter(dep.endDate);
+        // Só empurra para frente se a data atual estiver antes do fim da dependência
+        if (!it.startDate || it.startDate < minStart) {
+          it.startDate = minStart;
+          recalcItem(it);
+          changed = true;
+        }
+      }
+    }
+    if (!changed) break;
+  }
+}
+
+function refreshDatesDisplay(itId, it) {
+  const div = document.getElementById('cd-dates-' + itId);
+  if (!div) return;
+  let html = '';
+  if (it.startDate) html += `<span class="date-chip">📅 Início: ${fmt(it.startDate)}</span>`;
+  if (it.endDate) html += `<span class="date-chip end-date">🏁 Fim: ${fmt(it.endDate)}</span>`;
+  if (it.dependsOn) html += '<span class="date-chip dep-date">⛓️ Dependência ativa</span>';
+  div.innerHTML = html;
+}
+
+function syncNamesFromDOM() {
+  // Coleta nomes de etapas e subfases dos inputs sem esperar change event
+  const body = document.getElementById('card-modal-body');
+  if (!body) return;
+  body.querySelectorAll('[data-cl-name]').forEach(inp => {
+    const cl = (_cardEditing.checklists||[]).find(c => c.id === inp.dataset.clName);
+    if (cl) cl.name = inp.value;
+  });
+  body.querySelectorAll('[data-it-name]').forEach(inp => {
+    const [clId, itId] = inp.dataset.itName.split('|');
+    const it = getItem(clId, itId);
+    if (it) it.name = inp.value;
+  });
+}
+
+// ---- ABA COMENTÁRIOS ----
+function buildCommentsHTML() {
+  const cms = _cardEditing.comments || [];
+  const allMembers = [];
+  S.teams.forEach(t => t.members.forEach(m => allMembers.push({ name: m.name, team: t.name })));
+
+  const mOpts = allMembers.map(m => `<option value="${esc(m.name)}">${esc(m.name)} (${esc(m.team)})</option>`).join('');
+
+  let h = `<div class="comment-form">
+    <div class="form-row">
+      <div class="form-group" style="margin:0">
+        <label>Autor</label>
+        <input type="text" id="cm-author" list="cm-authors" placeholder="Seu nome">
+        <datalist id="cm-authors">${mOpts}</datalist>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px;margin-bottom:0">
+      <label>Comentário</label>
+      <textarea id="cm-text" rows="3" placeholder="Escreva seu comentário..."></textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px">
+      <button class="btn-primary btn-sm" onclick="addComment()">Publicar</button>
+    </div>
+  </div>
+  <div class="comment-list">`;
+
+  if (cms.length === 0) {
+    h += '<div class="empty-state"><div class="icon">💬</div><p>Nenhum comentário ainda.</p></div>';
+  } else {
+    [...cms].reverse().forEach(cm => {
+      h += `<div class="comment-item">
+        <button class="comment-del" onclick="deleteComment('${cm.id}')">✕</button>
+        <span class="comment-author">${esc(cm.author)}</span>
+        <span class="comment-date">${esc(cm.date)}</span>
+        <div class="comment-text">${esc(cm.text).replace(/\n/g,'<br>')}</div>
+      </div>`;
+    });
+  }
+  h += '</div>';
+  return h;
+}
+
+function addComment() {
+  const author = (document.getElementById('cm-author')?.value || '').trim();
+  const text = (document.getElementById('cm-text')?.value || '').trim();
+  if (!author || !text) { alert('Preencha o autor e o texto do comentário.'); return; }
+  if (!_cardEditing.comments) _cardEditing.comments = [];
+  _cardEditing.comments.push({
+    id: uid(), author, text,
+    date: new Date().toLocaleString('pt-BR')
+  });
+  renderCardBody();
+}
+
+function deleteComment(cmId) {
+  _cardEditing.comments = (_cardEditing.comments || []).filter(c => c.id !== cmId);
+  renderCardBody();
+}
+
+// ---- ABA ARQUIVOS ----
+function buildFilesHTML() {
+  const files = _cardEditing.files || [];
+  let h = `<label class="file-upload-area" for="file-inp">
+    <input type="file" id="file-inp" multiple style="display:none">
+    <div style="font-size:2rem;margin-bottom:8px">📎</div>
+    <div style="font-size:.9rem;font-weight:600">Clique para selecionar arquivos</div>
+    <div style="font-size:.75rem;color:var(--txt2);margin-top:4px">Qualquer formato aceito</div>
+  </label>
+  <div class="file-list">`;
+
+  if (files.length === 0) {
+    h += '<div class="empty-state"><div class="icon">📁</div><p>Nenhum arquivo anexado.</p></div>';
+  } else {
+    files.forEach(f => {
+      h += `<div class="file-item">
+        <div class="file-icon">${fileIcon(f.type)}</div>
+        <div class="file-info">
+          <div class="file-name" title="${esc(f.name)}">${esc(f.name)}</div>
+          <div class="file-meta">${fmtSize(f.size)} · ${esc(f.date)}</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-ghost btn-sm" onclick="downloadFile('${f.id}')">⬇️</button>
+          <button class="btn-danger btn-sm" onclick="deleteFile('${f.id}')">✕</button>
+        </div>
+      </div>`;
+    });
+  }
+  h += '</div>';
+  return h;
+}
+
+function attachFilesListeners() {
+  const inp = document.getElementById('file-inp');
+  if (inp) inp.onchange = e => handleFileUpload(e);
+}
+
+function fileIcon(type) {
+  if (!type) return '📄';
+  if (type.startsWith('image/')) return '🖼️';
+  if (type.includes('pdf')) return '📕';
+  if (type.includes('word')||type.includes('document')) return '📝';
+  if (type.includes('sheet')||type.includes('excel')||type.includes('csv')) return '📊';
+  if (type.includes('zip')||type.includes('rar')||type.includes('7z')) return '🗜️';
+  if (type.startsWith('video/')) return '🎬';
+  if (type.startsWith('audio/')) return '🎵';
+  return '📄';
+}
+
+function handleFileUpload(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  if (!_cardEditing.files) _cardEditing.files = [];
+  let pending = files.length;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      _cardEditing.files.push({
+        id: uid(), name: file.name, type: file.type,
+        size: file.size, data: ev.target.result,
+        date: new Date().toLocaleDateString('pt-BR')
+      });
+      if (--pending === 0) renderCardBody();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function downloadFile(fId) {
+  const f = (_cardEditing.files || []).find(f => f.id === fId);
+  if (!f) return;
+  const a = document.createElement('a');
+  a.href = f.data; a.download = f.name; a.click();
+}
+
+function deleteFile(fId) {
+  _cardEditing.files = (_cardEditing.files || []).filter(f => f.id !== fId);
+  renderCardBody();
+}
+
+// ======================================================
+// AUTO-SAVE E SALVAR OBRA
+// ======================================================
+function scheduleAutoSave() {
+  if (_autoSaveTimer) clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(autoSaveCard, 700);
+}
+
+function autoSaveCard() {
+  if (!_cardEditing) return;
+  collectDetailsFromDOM();
+  syncNamesFromDOM();
+  if (!(_cardEditing.name||'').trim()) return;
+  _cardEditing.name = _cardEditing.name.trim();
+
+  recalcDependents();
+  for (const cl of (_cardEditing.checklists||[])) {
+    for (const it of (cl.items||[])) recalcItem(it);
+  }
+  recalcDependents();
+  applyObraDates(_cardEditing);
+
+  const allPhases = [...S.phases, ...(S.planningPhases||[])];
+  const ph = allPhases.find(p => p.id === _cardPhaseId);
+  if (!ph) return;
+  const copy = JSON.parse(JSON.stringify(_cardEditing));
+  const idx = ph.cards.findIndex(c => c.id === _cardEditing.id);
+  if (idx >= 0) ph.cards[idx] = copy;
+  else ph.cards.push(copy);
+  save();
+  if ((S.planningPhases||[]).some(p => p.id === _cardPhaseId)) renderPlanningKanban();
+  else renderKanban();
+}
+
+function applyObraDates(card) {
+  if (!card.obraStartDate) return;
+  let cur = nextWorkDay(card.obraStartDate);
+  for (const cl of (card.checklists||[])) {
+    for (const it of (cl.items||[])) {
+      if (!it.startDate && (it.workDays||0) > 0) {
+        it.startDate = cur;
+        it.endDate   = calcEndDate(cur, it.workDays);
+      }
+      if (it.endDate) cur = nextWorkDayAfter(it.endDate);
+      else if (it.startDate) cur = nextWorkDayAfter(it.startDate);
+    }
+  }
+}
+
+function recalcDependentsForCard(card) {
+  for (let pass = 0; pass < 30; pass++) {
+    let changed = false;
+    for (const cl of (card.checklists||[])) {
+      for (const it of (cl.items||[])) {
+        if (!it.dependsOn) continue;
+        let dep = null;
+        for (const cl2 of (card.checklists||[])) {
+          dep = cl2.items.find(x => x.id === it.dependsOn);
+          if (dep) break;
+        }
+        if (!dep || !dep.endDate) continue;
+        const ns = nextWorkDayAfter(dep.endDate);
+        if (ns !== it.startDate) {
+          it.startDate = ns;
+          it.endDate   = calcEndDate(ns, it.workDays||0);
+          changed = true;
+        }
+      }
+    }
+    if (!changed) break;
+  }
+}
+
+function finalizePlanning() {
+  if (!_cardEditing) return;
+  collectDetailsFromDOM();
+  if (!(_cardEditing.name||'').trim()) { alert('Informe o nome da obra antes de finalizar.'); return; }
+  if (!confirm(`Mover "${_cardEditing.name}" para Gestão de Obras?`)) return;
+  autoSaveCard();
+  const planPh = (S.planningPhases||[]).find(p => p.id === _cardPhaseId);
+  if (!planPh) return;
+  const cardCopy = JSON.parse(JSON.stringify(_cardEditing));
+  planPh.cards = planPh.cards.filter(c => c.id !== _cardEditing.id);
+  if (S.phases.length === 0) {
+    S.phases.push({ id: uid(), name: 'A Iniciar', color: '#6366f1', cards: [] });
+  }
+  S.phases[0].cards.push(cardCopy);
+  save();
+  renderPlanningKanban();
+  renderKanban();
+  closeCardModal();
+}
+
+function saveCard() {
+  if (!(_cardEditing?.name||'').trim()) {
+    alert('Informe o nome da obra.');
+    switchCardTab('details');
+    return;
+  }
+  autoSaveCard();
+  closeCardModal();
+}
+
+function deleteCard() {
+  if (!confirm('Excluir esta obra permanentemente?')) return;
+  const allPhases = [...S.phases, ...(S.planningPhases||[])];
+  const ph = allPhases.find(p => p.id === _cardPhaseId);
+  const isP = ph && (S.planningPhases||[]).some(p2 => p2.id === ph.id);
+  if (ph) ph.cards = ph.cards.filter(c => c.id !== _cardEditing.id);
+  save();
+  if (isP) renderPlanningKanban(); else renderKanban();
+  closeCardModal();
+}
+
+// ======================================================
+// EQUIPES
+// ======================================================
+function renderTeams() {
+  const list = document.getElementById('teams-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  if (S.teams.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>Nenhuma equipe. Clique em "+ Nova Equipe".</p></div>';
+  } else {
+    S.teams.forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'team-card' + (_selectedTeamId === t.id ? ' selected' : '');
+      card.onclick = () => selectTeam(t.id);
+
+      const av = document.createElement('div');
+      av.className = 'team-avatar';
+      av.style.background = t.color;
+      av.textContent = initials(t.name);
+
+      const info = document.createElement('div');
+      info.className = 'team-info';
+      info.innerHTML = `<div class="team-name">${esc(t.name)}</div>
+        <div class="team-mc">${t.members.length} membro(s)</div>`;
+
+      const acts = document.createElement('div');
+      acts.className = 'team-actions';
+
+      const btnE = document.createElement('button');
+      btnE.className = 'btn-ghost btn-sm'; btnE.textContent = '✏️'; btnE.title = 'Editar';
+      btnE.onclick = e => { e.stopPropagation(); openTeamModal(t.id); };
+
+      const btnD = document.createElement('button');
+      btnD.className = 'btn-danger btn-sm'; btnD.textContent = '✕'; btnD.title = 'Excluir';
+      btnD.onclick = e => { e.stopPropagation(); deleteTeam(t.id); };
+
+      acts.append(btnE, btnD);
+      card.append(av, info, acts);
+      list.appendChild(card);
+    });
+  }
+
+  renderTeamDetail();
+}
+
+function selectTeam(id) {
+  _selectedTeamId = id;
+  renderTeams();
+}
+
+function renderTeamDetail() {
+  const col = document.getElementById('team-detail-col');
+  if (!col) return;
+
+  if (!_selectedTeamId) {
+    col.innerHTML = `<div class="team-detail-empty">
+      <div class="big-icon">👈</div>
+      <p>Selecione uma equipe para ver detalhes e membros</p>
+    </div>`;
+    return;
+  }
+
+  const t = S.teams.find(t => t.id === _selectedTeamId);
+  if (!t) { _selectedTeamId = null; renderTeamDetail(); return; }
+
+  const membersHTML = t.members.length === 0
+    ? '<div class="empty-state"><div class="icon">👤</div><p>Nenhum membro. Clique em "+ Membro".</p></div>'
+    : t.members.map(m => `
+      <div class="member-card">
+        <div class="member-avatar">${initials(m.name)}</div>
+        <div class="member-info">
+          <div class="member-name">${esc(m.name)}</div>
+          <div class="member-role">${esc(m.role)}</div>
+          <div class="member-contact">
+            ${m.phone ? '📞 '+esc(m.phone) : ''}
+            ${m.phone && m.email ? ' &nbsp;·&nbsp; ' : ''}
+            ${m.email ? '✉️ '+esc(m.email) : ''}
+          </div>
+        </div>
+        <div class="member-actions">
+          <button class="btn-ghost btn-sm" onclick="openMemberModal('${t.id}','${m.id}')">✏️</button>
+          <button class="btn-danger btn-sm" onclick="deleteMember('${t.id}','${m.id}')">✕</button>
+        </div>
+      </div>`).join('');
+
+  col.innerHTML = `
+    <div class="team-detail-header">
+      <div class="ta" style="background:${t.color}">${initials(t.name)}</div>
+      <h3>${esc(t.name)}</h3>
+      <button class="btn-primary btn-sm" onclick="openMemberModal('${t.id}')">+ Membro</button>
+    </div>
+    <div class="team-detail-body">
+      <div style="font-size:.8rem;color:var(--txt2);margin-bottom:14px">${t.members.length} membro(s) nesta equipe</div>
+      <div class="members-grid">${membersHTML}</div>
+    </div>`;
+}
+
+function deleteTeam(id) {
+  if (!confirm('Excluir esta equipe?')) return;
+  S.teams = S.teams.filter(t => t.id !== id);
+  if (_selectedTeamId === id) _selectedTeamId = null;
+  save(); renderTeams();
+}
+
+function deleteMember(teamId, memberId) {
+  if (!confirm('Excluir este membro?')) return;
+  const t = getTeam(teamId);
+  if (t) t.members = t.members.filter(m => m.id !== memberId);
+  save(); renderTeams();
+}
+
+// ======================================================
+// MODAL EQUIPE
+// ======================================================
+function openTeamModal(teamId) {
+  _teamEditId = teamId || null;
+  const t = teamId ? getTeam(teamId) : null;
+  document.getElementById('team-modal-title').textContent = teamId ? 'Editar Equipe' : 'Nova Equipe';
+  document.getElementById('tm-name').value = t ? t.name : '';
+  _teamColor = t ? t.color : PAL[0];
+  buildColorPicker('team-color-picker');
+  const tmType = document.getElementById('tm-type');
+  if (tmType) {
+    tmType.innerHTML = '<option value="">— Nenhum tipo —</option>' +
+      (S.teamTypes||[]).map(tt =>
+        `<option value="${tt.id}" ${(t&&t.typeId===tt.id)?'selected':''}>${esc(tt.name)}</option>`
+      ).join('');
+  }
+  document.getElementById('team-modal').classList.add('open');
+}
+
+function closeTeamModal() {
+  document.getElementById('team-modal').classList.remove('open');
+  _teamEditId = null;
+}
+
+function buildColorPicker(containerId) {
+  const currentC = containerId === 'tt-color-picker' ? _ttColor : _teamColor;
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  cont.innerHTML = PAL.map(c => `
+    <div class="color-swatch ${currentC===c?'selected':''}" style="background:${c}"
+      onclick="pickColor('${containerId}','${c}')"></div>`).join('');
+}
+
+function pickColor(containerId, color) {
+  if (containerId === 'tt-color-picker') _ttColor = color;
+  else _teamColor = color;
+  buildColorPicker(containerId);
+}
+
+function saveTeam() {
+  const name   = (document.getElementById('tm-name')?.value || '').trim();
+  if (!name) { alert('Informe o nome da equipe.'); return; }
+  const typeId = document.getElementById('tm-type')?.value || null;
+  if (_teamEditId) {
+    const t = getTeam(_teamEditId);
+    if (t) { t.name = name; t.color = _teamColor; t.typeId = typeId || null; }
+  } else {
+    S.teams.push({ id: uid(), name, color: _teamColor, typeId: typeId || null, members: [] });
+  }
+  save(); closeTeamModal(); renderTeams();
+}
+
+// ======================================================
+// MODAL MEMBRO
+// ======================================================
+function openMemberModal(teamId, memberId) {
+  _memberTeamId = teamId;
+  _memberEditId = memberId || null;
+  const t = getTeam(teamId);
+  const m = memberId && t ? t.members.find(x => x.id === memberId) : null;
+  document.getElementById('member-modal-title').textContent = memberId ? 'Editar Membro' : 'Novo Membro';
+  document.getElementById('mb-name').value = m ? m.name : '';
+  document.getElementById('mb-role').value = m ? m.role : '';
+  document.getElementById('mb-phone').value = m ? m.phone : '';
+  document.getElementById('mb-email').value = m ? m.email : '';
+  document.getElementById('member-modal').classList.add('open');
+}
+
+function closeMemberModal() {
+  document.getElementById('member-modal').classList.remove('open');
+  _memberEditId = null; _memberTeamId = null;
+}
+
+function saveMember() {
+  const name = (document.getElementById('mb-name')?.value || '').trim();
+  if (!name) { alert('Informe o nome do membro.'); return; }
+  const data = {
+    name,
+    role:  (document.getElementById('mb-role')?.value || '').trim(),
+    phone: (document.getElementById('mb-phone')?.value || '').trim(),
+    email: (document.getElementById('mb-email')?.value || '').trim()
+  };
+  const t = getTeam(_memberTeamId);
+  if (!t) return;
+  if (_memberEditId) {
+    const m = t.members.find(x => x.id === _memberEditId);
+    if (m) Object.assign(m, data);
+  } else {
+    t.members.push({ id: uid(), ...data });
+  }
+  save(); closeMemberModal(); renderTeams();
+}
+
+// ======================================================
+// DIAS ÚTEIS ENTRE DATAS
+// ======================================================
+function countWorkDays(startStr, endStr) {
+  if (!startStr || !endStr) return 0;
+  let n = 0;
+  let d = new Date(startStr + 'T12:00:00Z');
+  const end = new Date(endStr + 'T12:00:00Z');
+  while (d <= end) { if (isWorkDay(dateToStr(d))) n++; d.setUTCDate(d.getUTCDate()+1); }
+  return n;
+}
+
+// Calcula datas preliminares para subfases sem datas explícitas
+function getPreliminaryDates(card) {
+  const res = {};
+  if (!card.obraStartDate) return res;
+  let cur = nextWorkDay(card.obraStartDate);
+  for (const cl of (card.checklists||[])) {
+    for (const it of (cl.items||[])) {
+      if (it.startDate && it.endDate) {
+        res[it.id] = { startDate: it.startDate, endDate: it.endDate, preliminary: false, clId: cl.id };
+        cur = nextWorkDayAfter(it.endDate);
+      } else if ((it.workDays||0) > 0) {
+        const end = calcEndDate(cur, it.workDays);
+        res[it.id] = { startDate: cur, endDate: end, preliminary: true, clId: cl.id };
+        cur = nextWorkDayAfter(end);
+      }
+    }
+  }
+  return res;
+}
+
+// ======================================================
+// GANTT — DRAG NAS BARRAS
+// ======================================================
+let _ganttMeta = null;
+let _gDrag     = null;
+
+function gBarMD(e, el, mode) {
+  _gBarDragged = false;
+  e.preventDefault();
+  if (!_ganttMeta) return;
+  const { days, cellW } = _ganttMeta;
+  const startIdx = days.indexOf(el.dataset.gstart);
+  const endIdx   = days.indexOf(el.dataset.gend);
+  if (startIdx < 0) return;
+
+  const allBars = Array.from(document.querySelectorAll(`.g-bar[data-gid="${el.dataset.gid}"]`));
+  const r0 = allBars[0]?.getBoundingClientRect() || el.getBoundingClientRect();
+  const rN = allBars[allBars.length-1]?.getBoundingClientRect() || r0;
+
+  _gDrag = {
+    iid: el.dataset.gid, clid: el.dataset.gclid, cid: el.dataset.gcid,
+    mode, startDate: el.dataset.gstart, endDate: el.dataset.gend,
+    startIdx, endIdx, duration: endIdx - startIdx,
+    mouseX0: e.clientX,
+    ghost0Left: r0.left, ghost0Top: r0.top,
+    ghost0W: rN.right - r0.left, ghost0H: r0.height,
+    barColor: el.dataset.gcolor || '#3b82f6',
+    curNewStart: el.dataset.gstart, curNewEnd: el.dataset.gend
+  };
+
+  const g = document.getElementById('g-ghost');
+  g.style.cssText = `display:block;left:${r0.left}px;top:${r0.top}px;width:${_gDrag.ghost0W}px;height:${r0.height}px;background:${_gDrag.barColor};border-radius:3px`;
+
+  document.addEventListener('mousemove', gBarMV);
+  document.addEventListener('mouseup',   gBarMU);
+}
+
+function gBarMV(e) {
+  if (!_gDrag || !_ganttMeta) return;
+  const { days, cellW } = _ganttMeta;
+  const dx = e.clientX - _gDrag.mouseX0;
+  if (Math.abs(dx) > 4) _gBarDragged = true;
+  const delta = Math.round(dx / cellW);
+  const g   = document.getElementById('g-ghost');
+  const tip = document.getElementById('gantt-tip');
+
+  if (_gDrag.mode === 'resize') {
+    const newEndIdx = Math.max(_gDrag.startIdx, Math.min(days.length-1, _gDrag.endIdx + delta));
+    _gDrag.curNewStart = _gDrag.startDate;
+    _gDrag.curNewEnd   = days[newEndIdx];
+    g.style.width = Math.max(cellW, _gDrag.ghost0W + delta * cellW) + 'px';
+    tip.innerHTML = `<h4>Redimensionar</h4><p>🏁 Novo fim: ${fmt(_gDrag.curNewEnd)}</p><p>⏱️ ${countWorkDays(_gDrag.curNewStart, _gDrag.curNewEnd)} dias úteis</p>`;
+  } else {
+    const ns = Math.max(0, Math.min(days.length-1-_gDrag.duration, _gDrag.startIdx + delta));
+    const ne = Math.min(days.length-1, ns + _gDrag.duration);
+    _gDrag.curNewStart = days[ns];
+    _gDrag.curNewEnd   = days[ne];
+    g.style.left = (_gDrag.ghost0Left + delta * cellW) + 'px';
+    tip.innerHTML = `<h4>Mover</h4><p>📅 ${fmt(_gDrag.curNewStart)} → ${fmt(_gDrag.curNewEnd)}</p>`;
+  }
+  tip.style.display = 'block';
+  tip.style.left = Math.min(e.clientX+14, window.innerWidth-250) + 'px';
+  tip.style.top  = Math.min(e.clientY-10, window.innerHeight-110) + 'px';
+}
+
+function gBarMU() {
+  if (!_gDrag) return;
+  document.getElementById('g-ghost').style.display = 'none';
+  hideTip();
+  document.removeEventListener('mousemove', gBarMV);
+  document.removeEventListener('mouseup',   gBarMU);
+
+  const wasDragged = _gBarDragged;
+  const savedDrag  = _gDrag;
+  _gDrag = null;
+
+  if (!wasDragged) {
+    openCardModalFromGantt(savedDrag.cid, savedDrag.clid);
+    return;
+  }
+
+  const ns = savedDrag.curNewStart, ne = savedDrag.curNewEnd;
+  for (const ph of S.phases) {
+    for (const card of ph.cards) {
+      if (card.id !== savedDrag.cid) continue;
+      for (const cl of (card.checklists||[])) {
+        if (cl.id !== savedDrag.clid) continue;
+        const it = cl.items.find(i => i.id === savedDrag.iid);
+        if (it) {
+          it.startDate = ns; it.endDate = ne;
+          it.workDays  = countWorkDays(ns, ne);
+          recalcDependentsForCard(card);
+        }
+      }
+    }
+  }
+  save(); renderGantt();
+}
+
+function gBarHover(e, el) {
+  const rect = el.getBoundingClientRect();
+  el.style.cursor = e.clientX > rect.right - 10 ? 'ew-resize' : 'grab';
+}
+
+function openCardModalFromGantt(cardId, clId) {
+  let targetCard = null, targetPh = null;
+  for (const ph of S.phases) {
+    const c = ph.cards.find(x=>x.id===cardId);
+    if (c) { targetCard=c; targetPh=ph; break; }
+  }
+  if (!targetCard) return;
+  _cardEditing  = JSON.parse(JSON.stringify(targetCard));
+  _cardPhaseId  = targetPh.id;
+  _etapaCollapsed = {};
+  (_cardEditing.checklists||[]).forEach(cl => { _etapaCollapsed[cl.id] = true; });
+  if (clId) _etapaCollapsed[clId] = false;
+  _cardTab = 'stages';
+  renderCardModal();
+  document.getElementById('card-modal').style.display='flex';
+  if (clId) {
+    requestAnimationFrame(()=>{
+      const el = document.querySelector(`.etapa-block[data-clid="${clId}"]`);
+      if (el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+  }
+}
+
+// ======================================================
+// CALENDÁRIO
+// ======================================================
+function getWeekDays(offset) {
+  const now = new Date();
+  const dow  = now.getDay();
+  const mon  = new Date(now);
+  mon.setDate(now.getDate() - (dow===0?6:dow-1) + offset*7);
+  const days = [];
+  for (let i=0;i<7;i++) {
+    const d = new Date(mon);
+    d.setDate(mon.getDate()+i);
+    days.push(dateToStr(d));
+  }
+  return days;
+}
+
+function renderCalendario() {
+  const cont = document.getElementById('gestao-calendario-sub');
+  if (!cont) return;
+
+  const days = getWeekDays(_calWeekOffset);
+  const dayNames = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  const d0 = new Date(days[0]+'T12:00:00Z');
+  const d6 = new Date(days[6]+'T12:00:00Z');
+  const fmtShort = d => new Date(d+'T12:00:00Z').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+
+  const lbl = document.getElementById('cal-week-label');
+  if (lbl) lbl.textContent = `${fmtShort(days[0])} – ${fmtShort(days[6])}`;
+
+  // Coleta todas as subfases que intersectam essa semana
+  const rows = collectGanttRows('');
+  const weekRows = rows.filter(r => r.endDate >= days[0] && r.startDate <= days[6]);
+
+  // Agrupa por equipe
+  const teamMap = {};
+  weekRows.forEach(r => {
+    if (!teamMap[r.teamId]) teamMap[r.teamId]={name:r.teamName,color:r.teamColor,rows:[]};
+    teamMap[r.teamId].rows.push(r);
+  });
+
+  if (!Object.keys(teamMap).length) {
+    cont.innerHTML = '<div style="padding:40px;text-align:center;color:var(--txt2)">Nenhuma atividade nesta semana.</div>';
+    return;
+  }
+
+  let html = `<div style="overflow:auto;max-height:calc(100vh - 160px)">
+  <table style="border-collapse:collapse;width:100%;min-width:700px">
+  <thead><tr>
+    <th style="position:sticky;left:0;z-index:2;background:var(--bg0);border:1px solid var(--border);padding:6px 12px;font-size:.78rem;white-space:nowrap;min-width:140px">Equipe</th>`;
+  days.forEach((d,i)=>{
+    const isToday = d===dateToStr(new Date());
+    const isWE = i>=5;
+    html+=`<th style="border:1px solid var(--border);padding:4px 8px;font-size:.75rem;text-align:center;min-width:110px;${isToday?'color:var(--red);font-weight:700':''}${isWE?';opacity:.5':''}">
+      ${dayNames[i]}<br><span style="font-weight:400;font-size:.7rem">${fmtShort(d)}</span></th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  for (const [tid,tg] of Object.entries(teamMap)) {
+    html+=`<tr style="vertical-align:top">
+      <td style="position:sticky;left:0;z-index:1;background:var(--bg0);border:1px solid var(--border);padding:6px 10px;font-size:.8rem;font-weight:700">${esc(tg.name)}</td>`;
+    days.forEach((d,i)=>{
+      const isToday=d===dateToStr(new Date());
+      const isWE=i>=5;
+      const dayActs=tg.rows.filter(r=>d>=r.startDate&&d<=r.endDate);
+      let bg=isWE?'var(--bg2)':isToday?'rgba(239,68,68,.05)':'var(--bg1)';
+      html+=`<td style="border:1px solid var(--border);padding:3px;vertical-align:top;background:${bg};min-height:60px">`;
+      dayActs.forEach(r=>{
+        html+=`<div style="background:${r.teamColor};color:#fff;border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:.7rem;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+          onclick="openCardModalFromGantt('${r.cardId}','${r.clId}')"
+          title="${esc(r.cardName)} — ${esc(r.subfase||r.etapa)}">
+          ${esc(r.subfase||r.etapa)}
+        </div>`;
+      });
+      html+='</td>';
+    });
+    html+='</tr>';
+  }
+
+  html+='</tbody></table></div>';
+  cont.innerHTML=html;
+}
+
+// ======================================================
+// GANTT
+// ======================================================
+function collectGanttRows(filterCardId) {
+  const rows = [];
+  for (const ph of S.phases) {
+    for (const card of ph.cards) {
+      if (filterCardId && card.id !== filterCardId) continue;
+      const prelim = getPreliminaryDates(card);
+      for (const cl of (card.checklists||[])) {
+        for (const it of (cl.items||[])) {
+          const dates = prelim[it.id];
+          if (!dates) continue;
+          const team = getTeam(it.teamId);
+          const member = it.memberId ? getMember(it.teamId, it.memberId) : null;
+          rows.push({
+            id: it.id, clId: cl.id,
+            cardId: card.id, cardName: card.name,
+            etapa: cl.name, subfase: it.name,
+            teamId: it.teamId || '__none',
+            teamName: team ? team.name : 'Sem equipe',
+            teamColor: team ? team.color : '#94a3b8',
+            memberName: member ? member.name : '',
+            startDate: dates.startDate, endDate: dates.endDate,
+            workDays: it.workDays, done: it.done,
+            preliminary: dates.preliminary
+          });
+        }
+      }
+    }
+  }
+  return rows;
+}
+
+function renderGanttTeamTypeFilter() {
+  const cont = document.getElementById('gantt-teamtype-btns');
+  if (!cont) return;
+  const types = S.teamTypes || [];
+  if (!types.length) { cont.innerHTML = ''; return; }
+  cont.innerHTML = `<span style="font-size:.78rem;color:var(--txt2);margin-right:2px;white-space:nowrap">Tipo:</span>` +
+    types.map(tt => {
+      const on = _ganttTeamTypeFilter.has(tt.id);
+      return `<button onclick="toggleGanttTeamType('${tt.id}')"
+        style="padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:600;cursor:pointer;
+               border:1.5px solid ${on?tt.color:'var(--border)'};
+               background:${on?tt.color+'22':'transparent'};
+               color:${on?tt.color:'var(--txt2)'};transition:.12s;white-space:nowrap">
+        ${esc(tt.name)}</button>`;
+    }).join('');
+}
+
+function toggleGanttTeamType(ttId) {
+  if (_ganttTeamTypeFilter.has(ttId)) _ganttTeamTypeFilter.delete(ttId);
+  else _ganttTeamTypeFilter.add(ttId);
+  renderGantt();
+}
+
+function renderGantt() {
+  const filterSel = document.getElementById('gantt-filter');
+  if (!filterSel) return;
+
+  renderGanttTeamTypeFilter();
+
+  const prevFilter = filterSel.value;
+  filterSel.innerHTML = '<option value="">Todas as obras</option>';
+  for (const ph of S.phases)
+    for (const card of ph.cards)
+      filterSel.innerHTML += `<option value="${card.id}" ${prevFilter===card.id?'selected':''}>${esc(card.name)}</option>`;
+
+  const filterCardId = filterSel.value;
+  const groupBy = document.getElementById('gantt-group')?.value || 'team';
+  const typeActive = _ganttTeamTypeFilter.size > 0;
+
+  let rows = collectGanttRows(filterCardId);
+
+  if (typeActive) {
+    const allowed = new Set(
+      (S.teams||[]).filter(t => _ganttTeamTypeFilter.has(t.typeId)).map(t => t.id)
+    );
+    rows = rows.filter(r => allowed.has(r.teamId));
+  }
+
+  const legend = document.getElementById('gantt-legend');
+  const table  = document.getElementById('gantt-table');
+
+  if (rows.length === 0) {
+    table.innerHTML = '<tr><td colspan="100" style="padding:40px;text-align:center;color:var(--txt2)">Nenhuma subfase com datas cadastradas.</td></tr>';
+    legend.innerHTML = '<span style="font-size:.78rem;color:var(--txt2)">Sem dados para exibir.</span>';
+    return;
+  }
+
+  // Período
+  const allDates = rows.flatMap(r => [r.startDate, r.endDate]);
+  let minD = new Date(allDates.reduce((a,b)=>a<b?a:b)+'T12:00:00Z');
+  let maxD = new Date(allDates.reduce((a,b)=>a>b?a:b)+'T12:00:00Z');
+  minD.setUTCDate(minD.getUTCDate() - 3);
+  maxD.setUTCDate(maxD.getUTCDate() + 14);
+
+  const todayStr = dateToStr(new Date());
+  const days = [];
+  const cur = new Date(minD);
+  while (cur <= maxD) { days.push(dateToStr(new Date(cur))); cur.setUTCDate(cur.getUTCDate()+1); }
+
+  const cellW = Math.max(18, Math.min(36, Math.floor(750/days.length)));
+
+  // Meses
+  const monthSpans = [];
+  let curMon = null, curCnt = 0;
+  days.forEach(d => {
+    const key = d.slice(0,7);
+    if (key !== curMon) { if (curMon) monthSpans.push({key:curMon,count:curCnt}); curMon=key; curCnt=1; }
+    else curCnt++;
+  });
+  if (curMon) monthSpans.push({key:curMon,count:curCnt});
+
+  let html = '<thead>';
+  html += '<tr class="gantt-header-row"><th class="g-label">Subfase</th>';
+  monthSpans.forEach(ms => {
+    const [y,m] = ms.key.split('-');
+    const lbl = new Date(Date.UTC(+y,+m-1,1)).toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});
+    html += `<th colspan="${ms.count}" style="text-align:left;padding-left:4px">${lbl}</th>`;
+  });
+  html += '</tr><tr class="gantt-header-row"><th class="g-label"></th>';
+  days.forEach(d => {
+    const isToday = d===todayStr;
+    const isWE = (new Date(d+'T12:00:00Z')).getUTCDay()%6===0;
+    html += `<th style="width:${cellW}px;${isToday?'color:var(--red);font-weight:700':isWE?'opacity:.35':''}">${d.slice(8)}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  if (typeActive) {
+    // MODO CONDENSADO: 1 linha por equipe
+    const teamMap = {};
+    rows.forEach(r => {
+      if (!teamMap[r.teamId]) teamMap[r.teamId]={name:r.teamName,color:r.teamColor,rows:[]};
+      teamMap[r.teamId].rows.push(r);
+    });
+    for (const [tid,tg] of Object.entries(teamMap)) {
+      html += `<tr class="gantt-row"><td class="g-label" style="font-weight:700;color:var(--txt)">${esc(tg.name)}</td>`;
+      days.forEach(d => {
+        const isWE  = (new Date(d+'T12:00:00Z')).getUTCDay()%6===0;
+        const isToday = d===todayStr;
+        let cs = isWE?'background:rgba(15,23,42,.04);':'';
+        if (isToday) cs+='background:rgba(239,68,68,.06);';
+        const dayRows = tg.rows.filter(r=>d>=r.startDate&&d<=r.endDate);
+        if (dayRows.length) {
+          html += `<td style="${cs}padding:1px 0;vertical-align:top">`;
+          if (isToday) html += '<div class="g-today"></div>';
+          dayRows.forEach(row => {
+            const isF = d===row.startDate, isL = d===row.endDate;
+            const barBg = row.preliminary
+              ? `background:repeating-linear-gradient(45deg,${row.teamColor}55,${row.teamColor}55 3px,${row.teamColor}99 3px,${row.teamColor}99 6px);`
+              : `background:${row.teamColor};`;
+            const tip = JSON.stringify({card:row.cardName,sub:row.subfase,team:row.teamName,start:fmt(row.startDate),end:fmt(row.endDate),days:row.workDays,done:row.done,pre:row.preliminary});
+            html += `<div style="height:15px;margin:1px 0;${barBg}border-radius:${isF?'3px':'0'} ${isL?'3px':'0'} ${isL?'3px':'0'} ${isF?'3px':'0'};opacity:${row.done?.5:.9};overflow:hidden;cursor:pointer"
+              data-gid="${row.id}" data-gclid="${row.clId}" data-gcid="${row.cardId}"
+              data-gstart="${row.startDate}" data-gend="${row.endDate}" data-gwd="${row.workDays}" data-gcolor="${row.teamColor}"
+              onmousedown="gBarMD(event,this,'move')" onmousemove="gBarHover(event,this)"
+              onmouseenter="showTip(event,${tip.replace(/"/g,'&quot;')})" onmouseleave="hideTip()">
+              ${isF?`<span style="font-size:.58rem;font-weight:700;color:#fff;padding:0 4px;line-height:15px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(row.subfase||'')}</span>`:''}
+            </div>`;
+          });
+          html += '</td>';
+        } else {
+          html += `<td style="${cs}height:28px">${isToday?'<div class="g-today"></div>':''}</td>`;
+        }
+      });
+      html += '</tr>';
+    }
+  } else {
+    // MODO NORMAL: 1 linha por subfase agrupada
+    const groups = {};
+    const gKey = r => groupBy==='team' ? r.teamName : r.cardName;
+    rows.forEach(r => { const k=gKey(r); if(!groups[k]) groups[k]=[]; groups[k].push(r); });
+    for (const [groupName,gRows] of Object.entries(groups)) {
+      html += `<tr class="gantt-row"><td class="g-label grp" colspan="${days.length+1}">${esc(groupName)}</td></tr>`;
+      gRows.forEach(row => {
+        html += `<tr class="gantt-row"><td class="g-label" title="${esc(row.cardName)} — ${esc(row.subfase)}">${esc(row.subfase||row.etapa)}</td>`;
+        days.forEach(d => {
+          const isWE  = (new Date(d+'T12:00:00Z')).getUTCDay()%6===0;
+          const isToday = d===todayStr;
+          const inRange = d>=row.startDate&&d<=row.endDate;
+          const isFirst = d===row.startDate, isLast = d===row.endDate;
+          let cs = isWE?'background:rgba(15,23,42,.04);':'';
+          if (isToday) cs+='background:rgba(239,68,68,.06);';
+          if (inRange) {
+            const rL=isFirst?'4px':'0', rR=isLast?'4px':'0';
+            const op=row.done?.5:.9;
+            const tip=JSON.stringify({card:row.cardName,sub:row.subfase,team:row.teamName,member:row.memberName,start:fmt(row.startDate),end:fmt(row.endDate),days:row.workDays,done:row.done,pre:row.preliminary});
+            const barBg=row.preliminary
+              ?`background:repeating-linear-gradient(45deg,${row.teamColor}44,${row.teamColor}44 4px,${row.teamColor}88 4px,${row.teamColor}88 8px);border:1px dashed ${row.teamColor};`
+              :`background:${row.teamColor};`;
+            const barMode=isLast?'resize':'move';
+            html+=`<td class="g-cell" style="${cs}">
+              ${isToday?'<div class="g-today"></div>':''}
+              <div class="g-bar" style="left:${isFirst?'2':'0'}px;right:${isLast?'2':'0'}px;${barBg}opacity:${op};border-radius:${rL} ${rR} ${rR} ${rL}"
+                data-gid="${row.id}" data-gclid="${row.clId}" data-gcid="${row.cardId}"
+                data-gstart="${row.startDate}" data-gend="${row.endDate}" data-gwd="${row.workDays}" data-gcolor="${row.teamColor}"
+                onmousedown="gBarMD(event,this,'${barMode}')" onmousemove="gBarHover(event,this)"
+                onmouseenter="showTip(event,${tip.replace(/"/g,'&quot;')})" onmouseleave="hideTip()">
+                ${isFirst?`<span class="g-bar-lbl">${esc(row.subfase||'')}</span>`:''}
+              </div></td>`;
+          } else {
+            html+=`<td class="g-cell" style="${cs}">${isToday?'<div class="g-today"></div>':''}</td>`;
+          }
+        });
+        html += '</tr>';
+      });
+    }
+  }
+
+  html += '</tbody>';
+  table.innerHTML = html;
+  _ganttMeta = { days, cellW };
+
+  const teamsUsed = {};
+  rows.forEach(r=>{ if(!teamsUsed[r.teamId]) teamsUsed[r.teamId]={name:r.teamName,color:r.teamColor}; });
+  legend.innerHTML = Object.values(teamsUsed).map(t=>
+    `<div class="legend-item"><div class="legend-dot" style="background:${t.color}"></div><span>${esc(t.name)}</span></div>`
+  ).join('')+
+  `<div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span>Hoje</span></div>`+
+  `<div class="legend-item"><div class="legend-dot" style="background:repeating-linear-gradient(45deg,#94a3b844,#94a3b844 4px,#94a3b888 4px,#94a3b888 8px);border:1px dashed #94a3b8"></div><span>Estimada</span></div>`;
+}
+
+function showTip(e, data) {
+  if (_gDrag) return;
+  const tip = document.getElementById('gantt-tip');
+  tip.innerHTML = `<h4>${esc(data.card)}</h4>
+    <p>📋 ${esc(data.sub)}</p>
+    <p>👥 ${esc(data.team)}${data.member?` · ${esc(data.member)}`:''}</p>
+    <p>📅 ${data.start} → ${data.end}</p>
+    <p>⏱️ ${data.days} dia(s) útil(is)</p>
+    ${data.pre?'<p style="color:var(--yellow)">⚠️ Estimada — arraste para fixar</p>':''}
+    ${data.done?'<p style="color:var(--green)">✅ Concluída</p>':''}`;
+  tip.style.display = 'block';
+  const x = Math.min(e.clientX+14, window.innerWidth-250);
+  const y = Math.min(e.clientY-10, window.innerHeight-160);
+  tip.style.left = x + 'px';
+  tip.style.top  = y + 'px';
+}
+
+function hideTip() {
+  document.getElementById('gantt-tip').style.display = 'none';
+}
+
+// ======================================================
+// DATA FIM MANUAL
+// ======================================================
+function updateObraEndManual() {
+  if (!_cardEditing) return;
+  const endInput  = document.getElementById('cd-obra-end');
+  const daysInput = document.getElementById('cd-obra-days');
+  if (endInput) {
+    _cardEditing.obraEndDate = endInput.value;
+    const s = _cardEditing.obraStartDate;
+    if (s && endInput.value) {
+      const wDays = countWorkDays(s, endInput.value);
+      _cardEditing.obraWorkDays = wDays;
+      if (daysInput) daysInput.value = wDays;
+    }
+  }
+  const chip = document.getElementById('cd-obra-chip');
+  const s = _cardEditing.obraStartDate, e2 = _cardEditing.obraEndDate;
+  if (chip && e2) {
+    chip.style.display = 'flex';
+    chip.innerHTML = `<span class="date-chip">📅 Início: ${fmt(s)}</span><span class="date-chip end-date">🏁 Término previsto: ${fmt(e2)}</span>`;
+  }
+}
+
+// ======================================================
+// PERÍODO DE OBRA — RECÁLCULO
+// ======================================================
+function recalcObraPeriod() {
+  if (!_cardEditing) return;
+  const start = document.getElementById('cd-obra-start')?.value || '';
+  const days  = parseInt(document.getElementById('cd-obra-days')?.value) || 0;
+  _cardEditing.obraStartDate = start;
+  _cardEditing.obraWorkDays  = days;
+
+  const endInput = document.getElementById('cd-obra-end');
+  const chip     = document.getElementById('cd-obra-chip');
+
+  if (start && days > 0) {
+    const adjStart = nextWorkDay(start);
+    const end = calcEndDate(adjStart, days);
+    _cardEditing.obraEndDate = end;
+    if (endInput) endInput.value = end;
+    if (chip) {
+      chip.style.display = 'flex';
+      chip.innerHTML = `<span class="date-chip">📅 Início: ${fmt(adjStart)}</span><span class="date-chip end-date">🏁 Término previsto: ${fmt(end)}</span>`;
+    }
+  } else {
+    _cardEditing.obraEndDate = '';
+    if (endInput) endInput.value = '';
+    if (chip) chip.style.display = 'none';
+  }
+}
+
+// ======================================================
+// APLICAR TIPO DE CONTRATO À OBRA
+// ======================================================
+function applyContractType() {
+  collectDetailsFromDOM();
+  const ctId = _cardEditing?.contractTypeId;
+  if (!ctId) { alert('Selecione um tipo de contrato primeiro.'); return; }
+  const ct = (S.contractTypes || []).find(c => c.id === ctId);
+  if (!ct) return;
+
+  const hasExisting = (_cardEditing.checklists || []).length > 0;
+  if (hasExisting && !confirm(`Isso substituirá ${_cardEditing.checklists.length} etapa(s) existente(s). Continuar?`)) return;
+
+  _cardEditing.checklists = (ct.stages || []).map(st => ({
+    id: uid(), name: st.name,
+    items: (st.items || []).map(it => ({
+      id: uid(), name: it.name,
+      teamId: '', memberId: '',
+      workDays: it.workDays || 0,
+      startDate: '', endDate: '',
+      dependsOn: null, done: false
+    }))
+  }));
+
+  switchCardTab('stages');
+}
+
+// ======================================================
+// CONFIGURAÇÕES — TIPOS DE CONTRATO
+// ======================================================
+let _ctEditId = null;
+let _ctData   = null;
+
+let _settingsTab = 'contracts';
+
+function renderSettings() { showSettingsTab(_settingsTab); }
+
+function showSettingsTab(tab) {
+  _settingsTab = tab;
+  document.querySelectorAll('.settings-stab').forEach(b =>
+    b.classList.toggle('active', b.id === 'stab-' + tab));
+  const cont = document.getElementById('settings-content');
+  if (!cont) return;
+  if (tab === 'contracts')      renderContractsTab(cont);
+  if (tab === 'stagetemplates') renderStageTemplatesTab(cont);
+  if (tab === 'teams')          renderTeamsSettingsTab(cont);
+  if (tab === 'teamtypes')      renderTeamTypesTab(cont);
+  if (tab === 'phases')         renderPhasesTab(cont);
+}
+
+let _phaseSettingsCtx = 'planning';
+
+function renderPhasesTab(cont) {
+  const phases = _phaseSettingsCtx === 'planning'
+    ? (S.planningPhases || [])
+    : (S.phases || []);
+
+  const listHTML = phases.length === 0
+    ? `<div style="padding:32px;text-align:center;color:var(--txt2);font-size:.88rem">Nenhuma fase cadastrada. Adicione uma abaixo.</div>`
+    : phases.map((ph, idx) => `
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg1);transition:.15s" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='var(--bg1)'">
+        <span style="flex:1;font-weight:600;font-size:.87rem;color:var(--txt)">${esc(ph.name)}</span>
+        <span style="font-size:.72rem;padding:2px 9px;border-radius:99px;background:var(--bg3);color:var(--txt2);font-weight:600">${ph.cards.length} obra${ph.cards.length !== 1 ? 's' : ''}</span>
+        <div style="display:flex;gap:4px">
+          <button class="btn-ghost btn-sm" style="padding:4px 8px;font-size:.78rem" title="Mover para cima"
+            onclick="movePhaseOrder('${ph.id}','${_phaseSettingsCtx}',-1)" ${idx === 0 ? 'disabled style="opacity:.35"' : ''}>↑</button>
+          <button class="btn-ghost btn-sm" style="padding:4px 8px;font-size:.78rem" title="Mover para baixo"
+            onclick="movePhaseOrder('${ph.id}','${_phaseSettingsCtx}',1)" ${idx === phases.length-1 ? 'disabled style="opacity:.35"' : ''}>↓</button>
+          <button class="btn-ghost btn-sm" style="padding:4px 8px;font-size:.78rem" title="Renomear"
+            onclick="phaseSettingsRename('${ph.id}','${_phaseSettingsCtx}')">✏️</button>
+          <button class="btn-ghost btn-sm" style="padding:4px 8px;font-size:.78rem;color:var(--red)" title="Excluir fase"
+            onclick="phaseSettingsDelete('${ph.id}','${_phaseSettingsCtx}')">🗑️</button>
+        </div>
+      </div>`).join('');
+
+  cont.innerHTML = `
+    <div style="margin-bottom:20px;display:flex;gap:2px;background:var(--bg2);border-radius:8px;padding:3px;width:fit-content">
+      <button class="btn-vtoggle ${_phaseSettingsCtx==='planning'?'active':''}"
+        onclick="_phaseSettingsCtx='planning';renderPhasesTab(document.getElementById('settings-content'))">📐 Planejamento</button>
+      <button class="btn-vtoggle ${_phaseSettingsCtx==='gestao'?'active':''}"
+        onclick="_phaseSettingsCtx='gestao';renderPhasesTab(document.getElementById('settings-content'))">🏗️ Gestão de Obras</button>
+    </div>
+    <div style="background:var(--bg1);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg0)">
+        <span style="font-weight:700;font-size:.88rem;color:var(--txt)">Fases — ${_phaseSettingsCtx==='planning'?'Planejamento':'Gestão de Obras'}</span>
+      </div>
+      ${listHTML}
+      <div style="padding:12px 16px;background:var(--bg0);border-top:1px solid var(--border)">
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="phase-add-input" placeholder="Nome da nova fase..." style="flex:1"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();phaseSettingsAddInline('${_phaseSettingsCtx}');}">
+          <button class="btn-primary btn-sm" onclick="phaseSettingsAddInline('${_phaseSettingsCtx}')">+ Adicionar fase</button>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top:12px;font-size:.77rem;color:var(--txt2)">Use ↑ ↓ para reordenar. As obras permanecem na fase mesmo após reordenação.</p>`;
+}
+
+function phaseSettingsAdd(ctx) {
+  phaseSettingsAddInline(ctx);
+}
+
+function phaseSettingsAddInline(ctx) {
+  const inp = document.getElementById('phase-add-input');
+  const name = (inp?.value || '').trim();
+  if (!name) { inp?.focus(); return; }
+  const arr = ctx === 'planning' ? S.planningPhases : S.phases;
+  arr.push({ id: uid(), name, color: PAL[arr.length % PAL.length], cards: [] });
+  save();
+  if (ctx === 'planning') renderPlanningKanban(); else renderKanban();
+  renderPhasesTab(document.getElementById('settings-content'));
+}
+
+function phaseSettingsRename(phId, ctx) {
+  const ph = findPhase(phId);
+  if (!ph) return;
+  const name = prompt('Novo nome da fase:', ph.name);
+  if (!name?.trim()) return;
+  ph.name = name.trim();
+  save();
+  if (ctx === 'planning') renderPlanningKanban(); else renderKanban();
+  renderPhasesTab(document.getElementById('settings-content'));
+}
+
+function phaseSettingsColor(phId, ctx) {
+  const ph = findPhase(phId);
+  if (!ph) return;
+  const opts = PAL.map((c,i) => `${i+1}. ${c}`).join('\n');
+  const input = prompt(`Escolha um número ou cole uma cor hex:\n${opts}`, ph.color);
+  if (!input) return;
+  const n = parseInt(input);
+  if (n >= 1 && n <= PAL.length) ph.color = PAL[n-1];
+  else if (/^#[0-9a-fA-F]{6}$/.test(input.trim())) ph.color = input.trim();
+  else { alert('Valor inválido.'); return; }
+  save();
+  if (ctx === 'planning') renderPlanningKanban(); else renderKanban();
+  renderPhasesTab(document.getElementById('settings-content'));
+}
+
+function phaseSettingsDelete(phId, ctx) {
+  const arr = ctx === 'planning' ? S.planningPhases : S.phases;
+  const ph = arr.find(p => p.id === phId);
+  if (!ph) return;
+  if (ph.cards.length && !confirm(`A fase "${ph.name}" tem ${ph.cards.length} obra(s). Excluir mesmo assim?`)) return;
+  if (ctx === 'planning') S.planningPhases = S.planningPhases.filter(p => p.id !== phId);
+  else S.phases = S.phases.filter(p => p.id !== phId);
+  save();
+  if (ctx === 'planning') renderPlanningKanban(); else renderKanban();
+  renderPhasesTab(document.getElementById('settings-content'));
+}
+
+function movePhaseOrder(phId, ctx, dir) {
+  const arr = ctx === 'planning' ? S.planningPhases : S.phases;
+  const idx = arr.findIndex(p => p.id === phId);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  const [item] = arr.splice(idx, 1);
+  arr.splice(newIdx, 0, item);
+  save();
+  if (ctx === 'planning') renderPlanningKanban(); else renderKanban();
+  renderPhasesTab(document.getElementById('settings-content'));
+}
+
+function renderContractsTab(cont) {
+  const cts = S.contractTypes || [];
+  const listHTML = cts.length === 0
+    ? '<div class="empty-state"><div class="icon">📋</div><p>Nenhum tipo de contrato. Clique em "+ Novo Tipo".</p></div>'
+    : cts.map(ct => `
+      <div style="display:flex;align-items:center;gap:12px;background:var(--bg2);border-radius:8px;padding:12px 16px;border:1px solid var(--border);margin-bottom:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:.9rem">${esc(ct.name)}</div>
+          <div style="font-size:.75rem;color:var(--txt2);margin-top:3px">
+            ${ct.stages.length} etapa(s) · ${ct.stages.reduce((a,s)=>a+(s.items||[]).length,0)} subfase(s)
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn-ghost btn-sm" onclick="openContractTypeModal('${ct.id}')">✏️ Editar</button>
+          <button class="btn-danger btn-sm" onclick="deleteContractType('${ct.id}')">✕</button>
+        </div>
+      </div>`).join('');
+
+  cont.innerHTML = `
+    <div style="background:var(--bg1);border-radius:10px;border:1px solid var(--border);padding:20px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <h3 style="font-size:.95rem;font-weight:700">Tipos de Contrato</h3>
+          <p style="font-size:.78rem;color:var(--txt2);margin-top:3px">Modelos com etapas e subfases pré-definidas — aplique em qualquer obra com um clique</p>
+        </div>
+        <button class="btn-primary btn-sm" onclick="openContractTypeModal()">+ Novo Tipo</button>
+      </div>
+      ${listHTML}
+    </div>`;
+}
+
+function renderTeamsSettingsTab(cont) {
+  cont.innerHTML = `
+    <div class="teams-layout">
+      <div class="teams-list-col">
+        <div class="list-toolbar">
+          <button class="btn-primary" style="flex:1" onclick="openTeamModal()">+ Nova Equipe</button>
+        </div>
+        <div id="teams-list"></div>
+      </div>
+      <div class="team-detail-col" id="team-detail-col">
+        <div class="team-detail-empty">
+          <div class="big-icon">👈</div>
+          <p>Selecione uma equipe para ver detalhes e membros</p>
+        </div>
+      </div>
+    </div>`;
+  renderTeams();
+}
+
+function renderTeamTypesTab(cont) {
+  const tts = S.teamTypes || [];
+  const listHTML = tts.length === 0
+    ? '<div class="empty-state"><div class="icon">🏷️</div><p>Nenhum tipo de equipe. Clique em "+ Novo Tipo".</p></div>'
+    : tts.map(tt => `
+      <div style="display:flex;align-items:center;gap:12px;background:var(--bg2);border-radius:8px;padding:12px 16px;border:1px solid var(--border);margin-bottom:8px">
+        <div style="width:14px;height:14px;border-radius:50%;background:${tt.color};flex-shrink:0"></div>
+        <div style="flex:1;font-weight:600;font-size:.9rem">${esc(tt.name)}</div>
+        <div style="font-size:.75rem;color:var(--txt2)">${(S.teams||[]).filter(t=>t.typeId===tt.id).length} equipe(s)</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-ghost btn-sm" onclick="openTeamTypeModal('${tt.id}')">✏️</button>
+          <button class="btn-danger btn-sm" onclick="deleteTeamType('${tt.id}')">✕</button>
+        </div>
+      </div>`).join('');
+  cont.innerHTML = `
+    <div style="background:var(--bg1);border-radius:10px;border:1px solid var(--border);padding:20px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <h3 style="font-size:.95rem;font-weight:700">Tipos de Equipe</h3>
+          <p style="font-size:.78rem;color:var(--txt2);margin-top:3px">Categorize suas equipes e filtre ao atribuir trabalhos às subfases</p>
+        </div>
+        <button class="btn-primary btn-sm" onclick="openTeamTypeModal()">+ Novo Tipo</button>
+      </div>
+      ${listHTML}
+    </div>`;
+}
+
+let _ttEditId = null;
+let _ttColor  = PAL[2];
+
+function openTeamTypeModal(ttId) {
+  _ttEditId = ttId || null;
+  const tt = ttId ? (S.teamTypes||[]).find(t => t.id === ttId) : null;
+  _ttColor = tt ? tt.color : PAL[(S.teamTypes||[]).length % PAL.length];
+  document.getElementById('tt-modal-title').textContent = ttId ? 'Editar Tipo de Equipe' : 'Novo Tipo de Equipe';
+  document.getElementById('tt-name').value = tt ? tt.name : '';
+  buildColorPicker('tt-color-picker');
+  document.getElementById('tt-modal').classList.add('open');
+}
+
+function closeTTModal() {
+  document.getElementById('tt-modal').classList.remove('open');
+  _ttEditId = null;
+}
+
+function saveTT() {
+  const name = (document.getElementById('tt-name')?.value || '').trim();
+  if (!name) { alert('Informe o nome do tipo.'); return; }
+  if (!S.teamTypes) S.teamTypes = [];
+  if (_ttEditId) {
+    const tt = S.teamTypes.find(t => t.id === _ttEditId);
+    if (tt) { tt.name = name; tt.color = _ttColor; }
+  } else {
+    S.teamTypes.push({ id: uid(), name, color: _ttColor });
+  }
+  save(); closeTTModal(); renderSettings();
+}
+
+function deleteTeamType(ttId) {
+  if (!confirm('Excluir este tipo de equipe?')) return;
+  S.teamTypes = (S.teamTypes||[]).filter(t => t.id !== ttId);
+  (S.teams||[]).forEach(t => { if (t.typeId === ttId) t.typeId = null; });
+  save(); renderSettings();
+}
+
+function openContractTypeModal(ctId) {
+  _ctEditId = ctId || null;
+  const ct = ctId ? (S.contractTypes || []).find(c => c.id === ctId) : null;
+  _ctData = ct
+    ? JSON.parse(JSON.stringify(ct))
+    : { id: uid(), name: '', stages: [] };
+
+  document.getElementById('ct-modal-title').textContent = ctId ? 'Editar Tipo de Contrato' : 'Novo Tipo de Contrato';
+  document.getElementById('ct-name').value = _ctData.name;
+  renderCTStages();
+  document.getElementById('ct-modal').classList.add('open');
+}
+
+function closeCTModal() {
+  document.getElementById('ct-modal').classList.remove('open');
+  _ctEditId = null;
+  _ctData   = null;
+}
+
+function syncCTFromDOM() {
+  if (!_ctData) return;
+  const nameEl = document.getElementById('ct-name');
+  if (nameEl) _ctData.name = nameEl.value;
+  const cont = document.getElementById('ct-stages');
+  if (!cont) return;
+  cont.querySelectorAll('[data-sn]').forEach(el => {
+    const st = _ctData.stages.find(s => s.id === el.dataset.sn);
+    if (st) st.name = el.value;
+  });
+  cont.querySelectorAll('[data-in]').forEach(el => {
+    const [sId, iId] = el.dataset.in.split('|');
+    const st = _ctData.stages.find(s => s.id === sId);
+    if (st) { const it = (st.items||[]).find(i => i.id === iId); if (it) it.name = el.value; }
+  });
+  cont.querySelectorAll('[data-id]').forEach(el => {
+    const [sId, iId] = el.dataset.id.split('|');
+    const st = _ctData.stages.find(s => s.id === sId);
+    if (st) { const it = (st.items||[]).find(i => i.id === iId); if (it) it.workDays = parseInt(el.value)||0; }
+  });
+}
+
+function renderCTStages() {
+  const cont = document.getElementById('ct-stages');
+  if (!cont || !_ctData) return;
+
+  if (!_ctData.stages.length) {
+    cont.innerHTML = '<div class="empty-state"><div class="icon">🔧</div><p>Sem etapas. Clique em "+ Etapa".</p></div>';
+    return;
+  }
+
+  cont.innerHTML = _ctData.stages.map((st, si) => `
+    <div class="etapa-block">
+      <div class="etapa-header">
+        <span class="etapa-label">Etapa ${si+1}</span>
+        <input type="text" value="${esc(st.name)}" placeholder="Nome da etapa"
+          data-sn="${st.id}" style="flex:1;max-width:280px">
+        <button class="btn-primary btn-sm" onclick="addCTItem('${st.id}')">+ Subfase</button>
+        <button class="btn-danger btn-sm" onclick="removeCTStage('${st.id}')">✕ Etapa</button>
+      </div>
+      ${!(st.items||[]).length
+        ? '<div style="font-size:.78rem;color:var(--txt2);padding:4px 0 8px">Sem subfases ainda.</div>'
+        : (st.items||[]).map((it,ii)=>`
+          <div class="subfase-row">
+            <div class="subfase-row-header">
+              <span class="subfase-num">${si+1}.${ii+1}</span>
+              <input type="text" value="${esc(it.name)}" placeholder="Nome da subfase"
+                data-in="${st.id}|${it.id}" style="flex:1">
+              <label style="font-size:.76rem;color:var(--txt2);display:flex;align-items:center;gap:5px;flex-shrink:0">
+                Dias úteis:
+                <input type="number" min="0" value="${it.workDays||0}"
+                  data-id="${st.id}|${it.id}" style="width:68px">
+              </label>
+              <button class="btn-danger btn-sm" onclick="removeCTItem('${st.id}','${it.id}')">✕</button>
+            </div>
+          </div>`).join('')}
+    </div>`).join('');
+  attachCTListeners();
+}
+
+function attachCTListeners() {
+  const cont = document.getElementById('ct-stages');
+  if (!cont || !_ctData) return;
+
+  // Enter no nome da etapa → adiciona subfase
+  cont.querySelectorAll('[data-sn]').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      syncCTFromDOM();
+      const st = _ctData.stages.find(s => s.id === inp.dataset.sn);
+      if (!st) return;
+      if (!st.items) st.items = [];
+      st.items.push({ id: uid(), name: '', workDays: 0 });
+      renderCTStages();
+      setTimeout(() => {
+        const items = document.querySelectorAll(`[data-in^="${st.id}|"]`);
+        if (items.length) items[items.length - 1].focus();
+      }, 30);
+    });
+  });
+
+  // Enter no nome da subfase → adiciona próxima subfase
+  cont.querySelectorAll('[data-in]').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      syncCTFromDOM();
+      const [sId, iId] = inp.dataset.in.split('|');
+      const st = _ctData.stages.find(s => s.id === sId);
+      if (!st) return;
+      const idx = (st.items||[]).findIndex(i => i.id === iId);
+      const newItem = { id: uid(), name: '', workDays: 0 };
+      st.items.splice(idx + 1, 0, newItem);
+      renderCTStages();
+      setTimeout(() => {
+        const el = document.querySelector(`[data-in="${sId}|${newItem.id}"]`);
+        if (el) el.focus();
+      }, 30);
+    });
+  });
+}
+
+function addCTStage() {
+  if (!_ctData) return;
+  syncCTFromDOM();
+  _ctData.stages.push({ id: uid(), name: 'Nova Etapa', items: [] });
+  renderCTStages();
+}
+
+function addCTItem(stId) {
+  if (!_ctData) return;
+  syncCTFromDOM();
+  const st = _ctData.stages.find(s => s.id === stId);
+  if (!st) return;
+  if (!st.items) st.items = [];
+  st.items.push({ id: uid(), name: '', workDays: 0 });
+  renderCTStages();
+}
+
+function removeCTStage(stId) {
+  if (!confirm('Remover esta etapa e todas as suas subfases?')) return;
+  syncCTFromDOM();
+  _ctData.stages = _ctData.stages.filter(s => s.id !== stId);
+  renderCTStages();
+}
+
+function removeCTItem(stId, itId) {
+  syncCTFromDOM();
+  const st = _ctData.stages.find(s => s.id === stId);
+  if (st) st.items = (st.items||[]).filter(i => i.id !== itId);
+  renderCTStages();
+}
+
+function saveCT() {
+  syncCTFromDOM();
+  if (!_ctData.name.trim()) { alert('Informe o nome do tipo de contrato.'); return; }
+  _ctData.name = _ctData.name.trim();
+  if (!S.contractTypes) S.contractTypes = [];
+  if (_ctEditId) {
+    const idx = S.contractTypes.findIndex(c => c.id === _ctEditId);
+    if (idx >= 0) S.contractTypes[idx] = _ctData;
+  } else {
+    S.contractTypes.push(_ctData);
+  }
+  save();
+  closeCTModal();
+  renderSettings();
+}
+
+function deleteContractType(ctId) {
+  if (!confirm('Excluir este tipo de contrato?')) return;
+  S.contractTypes = (S.contractTypes||[]).filter(c => c.id !== ctId);
+  save();
+  renderSettings();
+}
+
+// ======================================================
+// BIBLIOTECA DE ETAPAS
+// ======================================================
+let _stEditId = null;
+let _stData   = null;
+
+function openSTModal(stId) {
+  _stEditId = stId || null;
+  const st = stId ? (S.stageTemplates||[]).find(t => t.id === stId) : null;
+  _stData = st
+    ? JSON.parse(JSON.stringify(st))
+    : { id: uid(), name: '', items: [] };
+  document.getElementById('st-modal-title').textContent = stId ? 'Editar Etapa' : 'Nova Etapa da Biblioteca';
+  document.getElementById('st-name').value = _stData.name;
+  renderSTItems();
+  document.getElementById('st-modal').classList.add('open');
+  setTimeout(() => document.getElementById('st-name')?.focus(), 60);
+}
+
+function closeSTModal() {
+  document.getElementById('st-modal').classList.remove('open');
+  _stEditId = null; _stData = null;
+}
+
+function renderSTItems() {
+  const cont = document.getElementById('st-items');
+  if (!cont || !_stData) return;
+  if (!_stData.items.length) {
+    cont.innerHTML = '<div style="font-size:.8rem;color:var(--txt2);padding:12px 0;text-align:center;font-style:italic">Sem subfases. Clique em "+ Subfase" ou pressione Enter no nome da etapa.</div>';
+    return;
+  }
+  cont.innerHTML = _stData.items.map((it, ii) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg0);border-radius:8px;border:1px solid var(--border);margin-bottom:6px">
+      <span style="font-size:.73rem;font-weight:700;color:var(--txt2);min-width:22px">${ii+1}.</span>
+      <input type="text" value="${esc(it.name)}" placeholder="Nome da subfase"
+        data-sti="${it.id}" style="flex:1">
+      <label style="font-size:.76rem;color:var(--txt2);display:flex;align-items:center;gap:5px;flex-shrink:0;white-space:nowrap">
+        Dias úteis:
+        <input type="number" min="0" step="0.5" value="${it.workDays||0}"
+          data-stid="${it.id}" style="width:62px">
+      </label>
+      <button class="btn-danger btn-sm" onclick="removeSTItem('${it.id}')">✕</button>
+    </div>`).join('');
+  attachSTListeners();
+}
+
+function attachSTListeners() {
+  const cont = document.getElementById('st-items');
+  if (!cont) return;
+  cont.querySelectorAll('[data-sti]').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      syncSTFromDOM();
+      const idx = _stData.items.findIndex(i => i.id === inp.dataset.sti);
+      const newItem = { id: uid(), name: '', workDays: 0 };
+      _stData.items.splice(idx + 1, 0, newItem);
+      renderSTItems();
+      setTimeout(() => {
+        const el = document.querySelector(`[data-sti="${newItem.id}"]`);
+        if (el) el.focus();
+      }, 30);
+    });
+  });
+}
+
+function syncSTFromDOM() {
+  if (!_stData) return;
+  const nameEl = document.getElementById('st-name');
+  if (nameEl) _stData.name = nameEl.value;
+  document.querySelectorAll('[data-sti]').forEach(inp => {
+    const it = _stData.items.find(i => i.id === inp.dataset.sti);
+    if (it) it.name = inp.value;
+  });
+  document.querySelectorAll('[data-stid]').forEach(inp => {
+    const it = _stData.items.find(i => i.id === inp.dataset.stid);
+    if (it) it.workDays = parseFloat(inp.value) || 0;
+  });
+}
+
+function addSTItem() {
+  if (!_stData) return;
+  syncSTFromDOM();
+  const newItem = { id: uid(), name: '', workDays: 0 };
+  _stData.items.push(newItem);
+  renderSTItems();
+  setTimeout(() => {
+    const el = document.querySelector(`[data-sti="${newItem.id}"]`);
+    if (el) el.focus();
+  }, 30);
+}
+
+function removeSTItem(itId) {
+  if (!_stData) return;
+  syncSTFromDOM();
+  _stData.items = _stData.items.filter(i => i.id !== itId);
+  renderSTItems();
+}
+
+function saveST() {
+  syncSTFromDOM();
+  if (!(_stData.name||'').trim()) { alert('Informe o nome da etapa.'); return; }
+  _stData.name = _stData.name.trim();
+  if (!S.stageTemplates) S.stageTemplates = [];
+  if (_stEditId) {
+    const idx = S.stageTemplates.findIndex(t => t.id === _stEditId);
+    if (idx >= 0) S.stageTemplates[idx] = _stData;
+  } else {
+    S.stageTemplates.push(_stData);
+  }
+  save(); closeSTModal(); renderSettings();
+}
+
+function deleteSTTemplate(stId) {
+  if (!confirm('Excluir esta etapa da biblioteca?')) return;
+  S.stageTemplates = (S.stageTemplates||[]).filter(t => t.id !== stId);
+  save(); renderSettings();
+}
+
+function renderStageTemplatesTab(cont) {
+  const templates = S.stageTemplates || [];
+  const listHTML = templates.length === 0
+    ? '<div class="empty-state"><div class="icon">🔧</div><p>Nenhuma etapa salva ainda.<br>Crie etapas aqui e reutilize-as ao montar tipos de contrato.</p></div>'
+    : templates.map(st => {
+        const items = st.items || [];
+        const subsHTML = items.length === 0
+          ? '<span style="font-size:.74rem;color:var(--txt2);font-style:italic">Sem subfases</span>'
+          : items.map(it => `<span style="font-size:.74rem;color:var(--txt2)">↳ ${esc(it.name)}${it.workDays ? ` <span style="opacity:.55">(${it.workDays} d.u.)</span>` : ''}</span>`).join('');
+        return `
+          <div style="background:var(--bg1);border-radius:12px;border:1px solid var(--border);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow-sm)">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:${items.length?'10':'0'}px">
+              <span style="font-weight:700;font-size:.92rem;color:var(--txt);flex:1">${esc(st.name)}</span>
+              <span style="font-size:.72rem;padding:2px 9px;border-radius:99px;background:var(--bg3);color:var(--txt2);font-weight:600">${items.length} subfase${items.length !== 1 ? 's' : ''}</span>
+              <button class="btn-ghost btn-sm" onclick="openSTModal('${st.id}')">✏️ Editar</button>
+              <button class="btn-danger btn-sm" onclick="deleteSTTemplate('${st.id}')">✕</button>
+            </div>
+            ${items.length ? `<div style="display:flex;flex-direction:column;gap:4px;padding-left:4px">${subsHTML}</div>` : ''}
+          </div>`;
+      }).join('');
+
+  cont.innerHTML = `
+    <div style="background:var(--bg1);border-radius:10px;border:1px solid var(--border);padding:20px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div>
+          <h3 style="font-size:.95rem;font-weight:700">Biblioteca de Etapas</h3>
+          <p style="font-size:.78rem;color:var(--txt2);margin-top:3px">Crie etapas reutilizáveis com suas subfases. Use-as ao montar tipos de contrato com um clique.</p>
+        </div>
+        <button class="btn-primary" onclick="openSTModal()">+ Nova Etapa</button>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:16px 0"></div>
+      ${listHTML}
+    </div>`;
+}
+
+// ======================================================
+// PICKER — ADICIONAR ETAPAS DA BIBLIOTECA AO TIPO DE CONTRATO
+// ======================================================
+function openSTPicker() {
+  const templates = S.stageTemplates || [];
+  if (!templates.length) {
+    alert('Nenhuma etapa na biblioteca. Vá em Configurações → Etapas para criar suas etapas reutilizáveis.');
+    return;
+  }
+  const cont = document.getElementById('st-picker-list');
+  if (!cont) return;
+  cont.innerHTML = templates.map(st => {
+    const items = st.items || [];
+    return `
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--bg0);border-radius:10px;border:1px solid var(--border);cursor:pointer;margin-bottom:8px;transition:.15s"
+        onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--bg2)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg0)'">
+        <input type="checkbox" value="${st.id}" style="margin-top:3px;flex-shrink:0;width:15px;height:15px;accent-color:var(--accent)">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.88rem;color:var(--txt)">${esc(st.name)}</div>
+          <div style="font-size:.74rem;color:var(--txt2);margin-top:3px;line-height:1.6">
+            ${items.length ? items.map(i => esc(i.name) + (i.workDays ? ` (${i.workDays} d.u.)` : '')).join(' · ') : '<em>Sem subfases</em>'}
+          </div>
+        </div>
+      </label>`;
+  }).join('');
+  document.getElementById('st-picker-modal').classList.add('open');
+}
+
+function closeSTPicker() {
+  document.getElementById('st-picker-modal').classList.remove('open');
+}
+
+function addFromSTPicker() {
+  if (!_ctData) return;
+  syncCTFromDOM();
+  const checked = Array.from(document.querySelectorAll('#st-picker-list input[type=checkbox]:checked'));
+  if (!checked.length) { alert('Selecione pelo menos uma etapa.'); return; }
+  checked.forEach(cb => {
+    const st = (S.stageTemplates||[]).find(t => t.id === cb.value);
+    if (!st) return;
+    _ctData.stages.push({
+      id: uid(),
+      name: st.name,
+      items: (st.items||[]).map(it => ({ id: uid(), name: it.name, workDays: it.workDays || 0 }))
+    });
+  });
+  closeSTPicker();
+  renderCTStages();
+}
+
+// Modais não fecham ao clicar fora — apenas pelo botão ✕ ou Cancelar
+
+// ======================================================
+// INIT
+// ======================================================
+load();
+showView('planning');
+</script>
+<div id="g-ghost"></div>
+</body>
+</html>
